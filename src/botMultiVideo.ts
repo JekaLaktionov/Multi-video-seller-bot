@@ -787,4 +787,4 @@ bot.start({
 
 //for deploy
 //npm install npm run build
-//node dist/botVideo.js
+//node dist/botMultiVideo.js

@@ -2,7 +2,8 @@
   "name": "video_seller",
   "version": "1.0.0",
   "description": "",
-  "type": "module",
+  "module": "commonjs",
+  "target": "ES2020",
   "main": "botMultiVideo.ts",
   "scripts": {
     "start": "node dist/botMultiVideo.js",

@@ -637,6 +637,11 @@ userTimeouts.set(chatId, timeoutId);
   { parse_mode: "Markdown" })
 }} );
 
+let a;
+function test(a:number){
+a=1
+}
+
 async function checkTrans(cost: number, urlVs: string[],chatId:number) {
 
 try {

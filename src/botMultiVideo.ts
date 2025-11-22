@@ -65,6 +65,9 @@ const costCons:number=Number( process.env.PRICE!); //price
 const timeGap:number= 400;
 
 bot.api.setMyCommands([
+    {
+      command: "token", description: "Смарт контракт токена для оплаты (ЧЕМ ПЛАТИТЬ)" 
+  },
   {
     command: "start", description: "Запуск бота" 
   },

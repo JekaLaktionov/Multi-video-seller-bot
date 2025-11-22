@@ -594,7 +594,7 @@ if (oldTimeout) clearTimeout(oldTimeout);
     console.log(`💰 Оплата: ${cost}, 🎥 URL: ${urls}`);
   let  intervalId = setInterval(async () => {
   try {
-    if (url === undefined) {throw error} 
+    if (url === undefined) {throw new Error("Wrong URL")}  
    let done = await checkTrans(cost,urls,chatId);
    if (done) {
      clearInterval(intervalId);

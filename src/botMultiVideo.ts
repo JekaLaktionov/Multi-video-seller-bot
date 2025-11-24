@@ -115,6 +115,7 @@ function escapeMarkdownV2(text: string) {
 
   const menuboard = new InlineKeyboard()
   .text(`Правила использования бота`,"rules").row()
+  .text(`Видео 0 - 2$`,"video0").row()
   .text(`Видео 1 - ${costs[1]}$`,"video1").row()
   .text(`Видео 2 - ${costs[2]}$`,"video2").row()
   .text(`Видео 3 - ${costs[3]}$`,"video3").row()
@@ -148,6 +149,71 @@ bot.callbackQuery("video_list", async (ctx) => {
     }
   );
 });
+
+
+
+
+
+bot.callbackQuery("video0", async (ctx) => {
+  await ctx.answerCallbackQuery("Загрузка видео 0");
+
+  let n = 4;
+  let factor = 10 ** n;
+  let costB: number = 2 + Math.random() / 10;
+  let cost = Math.trunc(costB * factor) / factor;
+
+  let url = "https://youtu.be/7AFLnPxW37M";
+
+
+  const text = `\"Обзор ситуации с МАЙКЛОМ СЕЙЛОРОМ\\!\"\n\n` +
+    `\"На сколько ещё \% может упасть BTC\"\n\n` +
+    `\"Этот видос будет доступен пару дней, а после удалён\"\n\n` +
+    'Разобрал на молекулы ситуацию с BTC и MICROSTRATEGY и почему это всё ФЕЙК\.\n\n'
+    ;
+
+  const requvisits =
+    `Для покупки отправьте USDT 💵 в сети ARBITRUM\n` +
+    
+    `К ОПЛАТЕ \\\- \`${cost}\` USDT\n` +
+    `На адресс \\\- \`${WALLET}\``;
+
+  let niceText: string;
+
+
+  if (promoOn === true) {
+    cost = cost - discount;
+    cost = Number(cost.toFixed(6));
+    const requvisitsD =
+      `Для покупки отправьте USDT💵 в сети ARBITRUM
+      ~СТАРАЯ ЦЕНА \\\- \`${costs[1]}\` USDT~ 🈹\n` +
+      `К ОПЛАТЕ \\\- \`${cost}\` USDT\n` +
+      `На адресс \\\- \`${WALLET}\``;
+
+    niceText = escapeMarkdownV2(text) + requvisitsD;
+
+  } else {
+    niceText = escapeMarkdownV2(text) + requvisits;
+  }
+  const inlineVideo = new InlineKeyboard()
+    .text(`Оплачено`, `pay:${cost},${url}`).row()
+    .text(`Назад к списку`, "back").row();
+  
+  await ctx.editMessageText(
+    niceText,
+    {
+      parse_mode: "MarkdownV2",
+      reply_markup: inlineVideo,
+    }
+  );
+});
+
+
+
+
+
+
+
+
 
 
 bot.callbackQuery("video1", async (ctx) => {
@@ -463,7 +529,7 @@ bot.callbackQuery("videoAll", async (ctx)=>{
   ctx.answerCallbackQuery("Загрузка всех видео");
 let n = 4;
   let factor = 10 ** n;
-  let costB: number= sumCosts + Math.random() / 100;
+  let costB: number= sumCosts + Math.random() / 10;
   let cost = Math.trunc(costB * factor) / factor;
 
 

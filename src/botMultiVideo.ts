@@ -552,7 +552,7 @@ const board = new InlineKeyboard().text("Список видео","video_list");
 bot.command("token", async (ctx) => {
 
   await ctx.reply(
-    `  Сеть ARBITRUM USDT ${costCons} \$ \n\n Смарт контракт токена\, который принимает бот   \`${ADDRESS}\` \n\n СЮДА НЕ ПЛАТИТЬ`,
+    `  Сеть ARBITRUM USDT \$ \n\n Смарт контракт токена\, который принимает бот   \`${ADDRESS}\` \n\n СЮДА НЕ ПЛАТИТЬ`,
     {
       parse_mode: "MarkdownV2"
     }

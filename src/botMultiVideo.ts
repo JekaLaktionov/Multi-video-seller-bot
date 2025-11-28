@@ -113,13 +113,13 @@ function escapeMarkdownV2(text: string) {
 
   const menuboard = new InlineKeyboard()
   .text(`Правила использования бота`,"rules").row()
-  // .text(`Видео 0 - 2$`,"video0").row()
   .text(`Видео 1 - ${costs[1]}$`,"video1").row()
   .text(`Видео 2 - ${costs[2]}$`,"video2").row()
   .text(`Видео 3 - ${costs[3]}$`,"video3").row()
   .text(`Видео 4 - ${costs[4]}$`,"video4").row()
   .text(`Видео 5 - ${costs[5]}$`,"video5").row()
   .text(`Все видео в один клик - ${sumCosts}$`,"videoAll").row()
+  .text(`Консультации по криптовалюте`,"cons").row()
 
 
 
@@ -147,66 +147,6 @@ bot.callbackQuery("video_list", async (ctx) => {
     }
   );
 });
-
-
-
-
-
-// bot.callbackQuery("video0", async (ctx) => {
-//   await ctx.answerCallbackQuery("Загрузка видео 0");
-
-//   let n = 4;
-//   let factor = 10 ** n;
-//   let costB: number = 2 + Math.random() / 10;
-//   let cost = Math.trunc(costB * factor) / factor;
-
-//   let url = "https://youtu.be/7AFLnPxW37M";
-
-
-//   const text = `\"Обзор ситуации с МАЙКЛОМ СЕЙЛОРОМ\\!\"\n\n` +
-//     `\"На сколько ещё \% может упасть BTC\"\n\n` +
-//     `\"Этот видос будет доступен пару дней, а после удалён\"\n\n` +
-//     'Разобрал на молекулы ситуацию с BTC и MICROSTRATEGY и почему это всё ФЕЙК\.\n\n'
-//     ;
-
-//   const requvisits =
-//     `Для покупки отправьте USDT 💵 в сети ARBITRUM\n` +
-    
-//     `К ОПЛАТЕ \\\- \`${cost}\` USDT\n` +
-//     `На адресс \\\- \`${WALLET}\``;
-
-//   let niceText: string;
-
-
-//   if (promoOn === true) {
-//     cost = cost - discount;
-//     cost = Number(cost.toFixed(6));
-//     const requvisitsD =
-//       `Для покупки отправьте USDT💵 в сети ARBITRUM
-//       ~СТАРАЯ ЦЕНА \\\- \`${costs[1]}\` USDT~ 🈹\n` +
-//       `К ОПЛАТЕ \\\- \`${cost}\` USDT\n` +
-//       `На адресс \\\- \`${WALLET}\``;
-
-//     niceText = escapeMarkdownV2(text) + requvisitsD;
-
-//   } else {
-//     niceText = escapeMarkdownV2(text) + requvisits;
-//   }
-//   const inlineVideo = new InlineKeyboard()
-//     .text(`Оплачено`, `pay:${cost},${url}`).row()
-//     .text(`Назад к списку`, "back").row();
-  
-//   await ctx.editMessageText(
-//     niceText,
-//     {
-//       parse_mode: "MarkdownV2",
-//       reply_markup: inlineVideo,
-//     }
-//   );
-// });
-
-
-
 
 
 
@@ -561,7 +501,37 @@ let text =`Все ролики - за один клик, хорошеe реше�
 
 
 
+bot.callbackQuery("cons", async (ctx) => {
+  await ctx.answerCallbackQuery("Загрузка");
 
+const stars = `
+
+👉[БОТ ДЛЯ КОНСУЛЬТАЦИЙ](https://t.me/DogeTraderAdvisorBot)`
+
+
+  const text = `Крипта — это не только пампы и сливы.
+Это структурная работа с активами, риском и временем.
+Если хочешь понять, куда двигаться дальше и как выстроить свою стратегию — пиши специальному боту внизу.
+Разберём портфель, определим точки входа, подскажу ошибки и дам ясный план действий.`
+    ;
+
+  let niceText: string;
+
+
+
+    niceText = escapeMarkdownV2(text)  + stars;
+  
+  const inlineVideo = new InlineKeyboard()
+    .text(`Назад к списку`, "back").row();
+  
+  await ctx.editMessageText(
+    niceText,
+    {
+      parse_mode: "MarkdownV2",
+      reply_markup: inlineVideo,
+    }
+  );
+});
 
 
 

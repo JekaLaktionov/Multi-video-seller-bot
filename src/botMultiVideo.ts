@@ -405,10 +405,7 @@ const requvisitsD = `Для покупки отправьте USDT💵 в сет
 
 bot.callbackQuery("video5", async (ctx)=>{
   ctx.answerCallbackQuery("Загрузка видео 5");
-let n = 4;
-  let factor = 10 ** n;
-  let costB: number= costs[5]! + Math.random() / 10;
-  let cost = Math.trunc(costB * factor) / factor;
+  let cost =await genCost(costs[5]!);
   let url=process.env.SELLIG_VIDEO5!;
 
     const stars = `
@@ -673,6 +670,13 @@ userTimeouts.set(chatId, timeoutId);
   { parse_mode: "Markdown" })
 }} );
 
+async function genCost(rawcost:number) {
+  let n = 4;
+  let factor = 10 ** n;
+  let costB: number= rawcost + Math.random() / 10;
+  let cost = Math.trunc(costB * factor) / factor;  
+  return cost
+}
 
 async function checkTrans(cost: number, urlVs: string[],chatId:number) {
 

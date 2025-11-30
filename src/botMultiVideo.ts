@@ -156,12 +156,7 @@ bot.callbackQuery("video_list", async (ctx) => {
 
 bot.callbackQuery("video1", async (ctx) => {
   await ctx.answerCallbackQuery("Загрузка видео 1");
-
-  let n = 4;
-  let factor = 10 ** n;
-  let costB: number = costs[1]! + Math.random() / 10;
-  let cost = Math.trunc(costB * factor) / factor;
-
+let cost = await genCost(costs[1]!);
   let url = process.env.SELLIG_VIDEO1!;
 
 const stars = `
@@ -214,11 +209,8 @@ const stars = `
 
 bot.callbackQuery("video2", async (ctx)=>{
   ctx.answerCallbackQuery("Загрузка видео 2");
-  let n = 4;
-  let factor = 10 ** n;
-  let costB: number= costs[2]! + Math.random() / 10;
-  let cost = Math.trunc(costB * factor) / factor;
-  
+
+  let cost = await genCost(costs[2]!);
 const stars = `
 
 🌟[За STARS купить тут](https://t.me/d0getrader/1134)`
@@ -271,11 +263,7 @@ const requvisitsD = `Для покупки отправьте USDT💵 в сет
 
 bot.callbackQuery("video3", async (ctx)=>{
   ctx.answerCallbackQuery("Загрузка видео 3");
-
-  let n = 4;
-  let factor = 10 ** n;
-  let costB: number= costs[3]! + Math.random() / 10;
-  let cost = Math.trunc(costB * factor) / factor;
+  let cost = await genCost(costs[3]!);
   let url=process.env.SELLIG_VIDEO3!;
   const stars = `
 
@@ -338,10 +326,7 @@ const requvisitsD = `Для покупки отправьте USDT💵 в сет
 bot.callbackQuery("video4", async (ctx)=>{
   ctx.answerCallbackQuery("Загрузка видео 4");
 
-  let n = 4;
-  let factor = 10 ** n;
-  let costB: number= costs[4]! + Math.random() / 10;
-  let cost = Math.trunc(costB * factor) / factor;
+let cost = await genCost(costs[4]!);
 
 let niceText;
 

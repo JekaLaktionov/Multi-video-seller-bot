@@ -27,7 +27,7 @@ bot.use(hydrate()as any);
 
 
 // costs
-const costs = Array.from({ length: 6 }, (_, i) =>
+const costs = Array.from({ length: 10 }, (_, i) =>
   Number(process.env[`PRICE${i}`])
 );
 const sumCosts = (costs[1]! + costs[2]! + costs[3]! + costs[4]! + costs[5]! )*0.80;

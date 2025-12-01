@@ -36,7 +36,9 @@ const sumCosts = (costs[1]! + costs[2]! + costs[3]! + costs[4]! + costs[5]! )*0.
     process.env.SELLIG_VIDEO2!,
     process.env.SELLIG_VIDEO3!,
     process.env.SELLIG_VIDEO4!,
-    process.env.SELLIG_VIDEO5!];
+    process.env.SELLIG_VIDEO5!,
+    process.env.SELLIG_VIDEO6!
+  ];
 
 
 
@@ -118,6 +120,7 @@ function escapeMarkdownV2(text: string) {
   .text(`Видео 3 - ${costs[3]}$`,"video3").row()
   .text(`Видео 4 - ${costs[4]}$`,"video4").row()
   .text(`Видео 5 - ${costs[5]}$`,"video5").row()
+  .text(`Видео 6 - ${costs[6]}$`,"video6").row()
   .text(`Все видео в один клик - ${sumCosts}$`,"videoAll").row()
   .text(`Консультации по криптовалюте`,"cons").row()
 
@@ -138,7 +141,9 @@ bot.callbackQuery("video_list", async (ctx) => {
 
 4️⃣ — Технология успешного набора портфеля: какие ошибки совершают  все, и как их избежать 💼
 
-5️⃣ — Как обычные хомяки становятся кормом для рынка, и _что делать_, чтобы не повторить их путь 🐹➡️🐳`
+5️⃣ — Как обычные хомяки становятся кормом для рынка, и _что делать_, чтобы не повторить их путь 🐹➡️🐳
+
+6️⃣ - Что делать с щитками, чтобы вынять, хоть что-то, инвест тезис по мощной акции⚠️`
 
   await ctx.editMessageText(escapeMarkdownV2(text),
     {
@@ -445,16 +450,68 @@ const requvisitsD = `Для покупки отправьте USDT💵 в сет
 
 
 
+bot.callbackQuery("video6", async (ctx)=>{
+  ctx.answerCallbackQuery("Загрузка видео 6");
+
+  let cost =await genCost(costs[6]!);
+  let url=process.env.SELLIG_VIDEO6!;
+
+    const stars = `
+
+🌟[За STARS купить тут]()`
+
+let niceText;
+let text =`_ПРОДАЮ ВСЮ АЛЬТУ_ !  😈
+
+_ПОЧЕМУ ЦЕНЫ НА ЩИТКИ БУДУТ ИДТИ ТОЛЬКО ВНИЗ_?
+
+_ЛУЧШАЯ ИНВЕСТИЦИЯ В КРИПТУ в ДАННЫЙ МОМЕНТ_.
+
+Сделал ролик на тяжелую тему. Проговорил, что делаю сейчас с щитками и другой лоу кап-альтой.
+Считаю, что холдить ИХ сейчас ОПАСНО, перелился в менее рисковый класс активов.Видос решил сделать, премиум, чтобы не сеять панику.
+
+
+`;
+  const requvisits = `Для покупки отправьте USDT💵 в сети ARBITRUM
+К ОПЛАТЕ \\\- \`${cost}\` USDT
+На адресс \\\- \`${WALLET}\``;
+
+if (promoOn===true){
+  cost = cost-discount;
+ cost = Number(cost.toFixed(6));
+const requvisitsD = `Для покупки отправьте USDT💵 в сети ARBITRUM
+~СТАРАЯ ЦЕНА \\\- \`${costs[6]}\` USDT~ 🈹
+К ОПЛАТЕ \\\- \`${cost}\` USDT
+На адресс \\\- \`${WALLET}\``;
+
+ niceText = escapeMarkdownV2(text) + requvisitsD
+
+} else { niceText = escapeMarkdownV2(text) + requvisits + stars;
+   
+}
+
+
+  const inlineVideo = new InlineKeyboard()  
+  .text(`Оплачено - ${cost}`,`pay:${cost},${url}`).row()
+  .text(`Назад к списку`,"back").row()
+
+
+  await ctx.editMessageText(niceText,
+      {
+        parse_mode: "MarkdownV2",
+      reply_markup: inlineVideo,
+    });
+})
+
+
+
+
 bot.callbackQuery("videoAll", async (ctx)=>{
   ctx.answerCallbackQuery("Загрузка всех видео");
-let n = 4;
-  let factor = 10 ** n;
-  let costB: number= sumCosts + Math.random() / 10;
-  let cost = Math.trunc(costB * factor) / factor;
+let cost =await genCost(sumCosts);
 
 
-
-const sumCostsOld = (costs[1]! + costs[2]! + costs[3]! + costs[4]! + costs[5]! )
+const sumCostsOld = (costs[1]! + costs[2]! + costs[3]! + costs[4]! + costs[5]! + costs[6]! )
 let niceText;
 let text =`Все ролики - за один клик, хорошеe решение. 
 По отдельности цена составила бы ${sumCostsOld}$. 

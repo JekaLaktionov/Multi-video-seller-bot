@@ -5,8 +5,124 @@ import dotenv from 'dotenv';
 dotenv.config();
 import express from "express";
 import {hydrate  } from "@grammyjs/hydrate"
-import { text } from 'stream/consumers';
 import { error } from 'console';
+
+
+
+type VideoData = {
+
+  body: string;
+  starsLink: string;
+  costIndex: number;
+};
+
+
+const videos: Record<number, VideoData> = {
+  1: {
+    body: `\"Как ЗАРАБОТАТЬ НА ТРЕЙДИНГЕ?\"\n\n` +
+    `\"Почему там 97\% теряет ВСЁ\"\n\n` +
+    `\"Рабочие \"Стратегии\" в трейдинге\"\n\n` +
+    'Вот видос с ТИТАНОВОЙ базой по трейдингу 🦾, такое нельзя выкладывать в открытый доступ.\n'
+    ,
+    starsLink: 'https://t.me/d0getrader/1112',
+    costIndex: 1,
+  },
+  2: {
+    body: `*"100 МИЛЛИОНОВ ОТ COINBASE"* 💰🔥
+
+*"Разобрано 2 ИИ проекта с ОГРОМНЫМ ПОТЕНЦИАЛОМ"* 🤖🚀
+
+*"Ваш любимый HIGH RISK сегмент"* ⚡🎲
+
+Видео представляет собой _детальный разбор_ и _инвест-тезис_ по двум ИИ проектам,  
+а также **общие мысли по всему нарративу** 🤝📈  
+
+Готовься: будет _анализ_, _аргументы_ и _честный взгляд на риски_ 💡⚠️`,
+    starsLink: 'https://t.me/d0getrader/1134',
+    costIndex: 2,
+  },
+  3: {
+    body: `_Почему ТЫ не заработаешь на АЛЬТЕ?_ 💸
+
+_Сколько ИКСОВ реально можно забрать с КРИПТЫ?_ 🚀
+
+_Что покупать, чтобы не стать кормом КИТОВ?_ 🐳
+
+__Я провёл детальный анализ доходности альткоинов за 5 лет (год-к-году)__.
+📊 *Вычислил вероятность купить скам даже в ТОП-100,*
+🔍 выявил самые надёжные и качественные альткоины,
+📉 разобрался, какие монеты стабильно обнуляются и почему.
+
+На создание этой базы я потратил 7 часов исследований.
+И такой контент объективно не выгоден блогерам, биржам и маркетмейкерам — он мешает им зарабатывать.
+
+Поэтому выкладывать это в открытый доступ — нет смысла. 🔒`,
+    starsLink:'https://t.me/d0getrader/1179',
+    costIndex:3
+  },
+  4: {
+    body: `*"99% крипанов совершают ЭТУ ОШИБКУ"* ❗🔥
+
+*"Моя ТЕХНОЛОГИЯ выбора и набора КРИПТО АКТИВОВ"* ⚙️💎
+
+*"Активы для УСТОЙЧИВОГО РОСТА капитала"* 📈🌱
+
+Сделал ролик по _наболевшей теме_ 🎥  
+Разобрал одну **ГЛАВНУЮ ошибку** всех криптовалютчиков при работе с портфелем ⚠️  
+
+Показал два примера:  
+- _ПЛОХОГО_  портфеля ❌  
+- _ХОРОШЕГО_  портфеля ✅  
+
+И дал **чёткую технологию**, как собирать _ХОРОШИЙ \(прибыльный\)_ портфель шаг за шагом 💼✨`,
+    starsLink:'https://t.me/d0getrader/1231',
+    costIndex:4,
+  },
+    5: {
+    body: `_КТО И НА ЧЁМ ( НА КОМ ) ЗАРАБАТЫВАЕТ В КРИПТЕ_ ?  🐋🍆🐹
+
+_ПОЧЕМУ БУДУЧИ РИТЕЙЛОМ, ТЫ ОБРЕЧЁН ТЕРЯТЬ_?
+
+_ПРАКТИЧЕСКИЕ СОВЕТЫ: КАК ПЕРЕЛОМИТЬ СИТУАЦИЮ_.
+
+Сделал ролик на интересную тему. Изучил, на чём и как зарабатывают сильные мира сего в криптовалютах.
+ Казалось бы, ответ очевиден на хомяках, но всё не так просто. 
+
+По результатам исследования, сделал выводы, что конкретно нужно делать рядовому хомяку,
+ чтобы значительно увеличить свои шансы на получение прибыли.`,
+    starsLink:'https://t.me/d0getrader/1362',
+    costIndex:5,
+},
+    6: {
+    body: `_ПРОДАЮ ВСЮ АЛЬТУ_ !  😈
+
+_ПОЧЕМУ ЦЕНЫ НА ЩИТКИ БУДУТ ИДТИ ТОЛЬКО ВНИЗ_?
+
+_ЛУЧШАЯ ИНВЕСТИЦИЯ В КРИПТУ в ДАННЫЙ МОМЕНТ_.
+
+Сделал ролик на тяжелую тему. Проговорил, что делаю сейчас с щитками и другой лоу кап-альтой.
+Считаю, что холдить ИХ сейчас ОПАСНО, перелился в менее рисковый класс активов.Видос решил сделать, премиум, чтобы не сеять панику.`,
+    starsLink:'https://t.me/d0getrader/1473',
+    costIndex:6,
+},
+    7: {
+    body: `.`,
+    starsLink:'',
+    costIndex:7,
+},    8: {
+    body: `.`,
+    starsLink:'',
+    costIndex:8,},
+      9: {
+    body: `.`,
+    starsLink:'',
+    costIndex:9,
+  }}
+
+
+const VIP:number[] = [7600112142,5566365178];
+const VIP_DISCOUNT = 2;
+
 
 
 const ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY;
@@ -30,7 +146,14 @@ bot.use(hydrate()as any);
 const costs = Array.from({ length: 10 }, (_, i) =>
   Number(process.env[`PRICE${i}`])
 );
-const sumCosts = (costs[1]! + costs[2]! + costs[3]! + costs[4]! + costs[5]! )*0.80;
+
+
+const urlArr = Array.from({ length: 10 }, (_, i) =>
+  (process.env[`SELLIG_VIDEO${i}`])
+);
+
+
+const sumCosts = (costs[1]! + costs[2]! + costs[3]! + costs[4]! + costs[5]! + costs[6]! )*0.80;
   let Allurl=[
     process.env.SELLIG_VIDEO1!,
     process.env.SELLIG_VIDEO2!,
@@ -78,13 +201,9 @@ bot.api.setMyCommands([
 
 ])
 
-
-
-
-
-bot.command("start", async (ctx) => {
-  const board = new InlineKeyboard().text("Список видео","video_list");
-  let text = `🎥 Здарова, криптовалютчик\!  
+async function getStartMess() {
+  
+  let StartText = `🎥 Здарова, криптовалютчик\!  
 Бот для доступа к эксклюзивному контенту на связи 👋💎  
 
 Перед использованием бота прочитай *простые правила* ⬇️
@@ -93,11 +212,16 @@ bot.command("start", async (ctx) => {
 2️⃣ - Оплачивай **точную сумму**, которую просит бот (со всеми копейками) ✔️  
 3️⃣ - Во время проверки платежа **не выходи в меню** — просто жди, бот ответит автоматически ⏳🤖
 `
+return StartText;
+}
+
+bot.command("start", async (ctx) => {
+  let text =await getStartMess();
   await ctx.reply(
    escapeMarkdownV2(text),
     {
       parse_mode: "MarkdownV2",
-      reply_markup: board
+      reply_markup: menuboard
     }
   );
 });
@@ -110,11 +234,12 @@ function escapeMarkdownV2(text: string) {
 }
 
 
-
-
-
   const menuboard = new InlineKeyboard()
   .text(`Правила использования бота`,"rules").row()
+  .text("Закрытая видеобиблиотека", "videoboards").row()
+  .text(`Консультации по криптовалюте`,"cons").row();
+
+  const videoboard = new InlineKeyboard()
   .text(`Видео 1 - ${costs[1]}$`,"video1").row()
   .text(`Видео 2 - ${costs[2]}$`,"video2").row()
   .text(`Видео 3 - ${costs[3]}$`,"video3").row()
@@ -122,12 +247,34 @@ function escapeMarkdownV2(text: string) {
   .text(`Видео 5 - ${costs[5]}$`,"video5").row()
   .text(`Видео 6 - ${costs[6]}$`,"video6").row()
   .text(`Все видео в один клик - ${sumCosts}$`,"videoAll").row()
-  .text(`Консультации по криптовалюте`,"cons").row()
+  .text("Назад","back").row();
 
 
 
-bot.callbackQuery("video_list", async (ctx) => {
+bot.callbackQuery("menu", async (ctx) => {
   await ctx.answerCallbackQuery("Загрузка списка....");
+  let text = `
+Добро пожаловать в меню бота.
+Ниже, описано, что делают кнопки меню 👇
+
+1️⃣ — Правила, советую ознакомится!
+
+2️⃣ — Видео библиотека с моими непубличными роликами и идеями.
+
+3️⃣ — Для получения консультации и ПРЯМОГО общения со мной, нажми сюда
+
+`
+
+  await ctx.editMessageText(escapeMarkdownV2(text),
+    {
+      parse_mode: "MarkdownV2",
+      reply_markup: menuboard
+    }
+  );
+});
+
+
+async function getVideoText(){
   let text = `
 🎥 Вот список видео.
 Подробнее о каждом ролике можно прочитать, кликнув на соответствующую кнопку ниже.
@@ -144,372 +291,81 @@ bot.callbackQuery("video_list", async (ctx) => {
 5️⃣ — Как обычные хомяки становятся кормом для рынка, и _что делать_, чтобы не повторить их путь 🐹➡️🐳
 
 6️⃣ - Что делать с щитками, чтобы вынять, хоть что-то, инвест тезис по мощной акции⚠️`
+return text
+}
 
+
+bot.callbackQuery("videoboards", async (ctx) => {
+  await ctx.answerCallbackQuery("Загрузка списка....");
+  let text = await getVideoText();
   await ctx.editMessageText(escapeMarkdownV2(text),
     {
       parse_mode: "MarkdownV2",
-      reply_markup: menuboard
+      reply_markup: videoboard
     }
   );
 });
 
 
 
+function buildVideoMessage(videos:VideoData, cost: number) {
+  const text = 
+    escapeMarkdownV2(videos.body) +
+    "\n\n";
 
-
-
-
-bot.callbackQuery("video1", async (ctx) => {
-  await ctx.answerCallbackQuery("Загрузка видео 1");
-let cost = await genCost(costs[1]!);
-  let url = process.env.SELLIG_VIDEO1!;
-
-const stars = `
-
-🌟[За STARS купить тут](https://t.me/d0getrader/1112)`
-
-
-  const text = `\"Как ЗАРАБОТАТЬ НА ТРЕЙДИНГЕ\\?\"\n\n` +
-    `\"Почему там 97\% теряет ВСЁ\"\n\n` +
-    `\"Рабочие \"Стратегии\" в трейдинге\"\n\n` +
-    'Вот видос с ТИТАНОВОЙ базой по трейдингу 🦾, такое нельзя выкладывать в открытый доступ\.\n\n'
-    ;
-
-  const requvisits =
+  const requisites =
     `Для покупки отправьте USDT 💵 в сети ARBITRUM\n` +
-    
-    `К ОПЛАТЕ \\\- \`${cost}\` USDT\n` +
-    `На адресс \\\- \`${WALLET}\``;
+    `К ОПЛАТЕ \\- \`${cost}\` USDT\n` +
+    `На адрес \\- \`${WALLET}\`\n\n`;
 
-  let niceText: string;
+  const stars = 
+    `🌟[За STARS купить тут](${videos.starsLink})`;
+
+  return text + requisites + stars;
+}
 
 
-  if (promoOn === true) {
-    cost = cost - discount;
-    cost = Number(cost.toFixed(6));
-    const requvisitsD =
-      `Для покупки отправьте USDT💵 в сети ARBITRUM
-      ~СТАРАЯ ЦЕНА \\\- \`${costs[1]}\` USDT~ 🈹\n` +
-      `К ОПЛАТЕ \\\- \`${cost}\` USDT\n` +
-      `На адресс \\\- \`${WALLET}\``;
 
-    niceText = escapeMarkdownV2(text) + requvisitsD;
 
-  } else {
-    niceText = escapeMarkdownV2(text) + requvisits + stars;
+
+bot.callbackQuery(/^video(\d+)$/, async (ctx) => {
+  const id = Number(ctx.match[1]); 
+  const video = videos[id];
+
+  if (!video) {
+    await ctx.answerCallbackQuery("Видео не найдено");
+    return;
   }
-  const inlineVideo = new InlineKeyboard()
-    .text(`Оплачено`, `pay:${cost},${url}`).row()
-    .text(`Назад к списку`, "back").row();
   
-  await ctx.editMessageText(
-    niceText,
-    {
-      parse_mode: "MarkdownV2",
-      reply_markup: inlineVideo,
-    }
-  );
+  await ctx.answerCallbackQuery(`Загрузка видео ${id}`);
+
+  let cost = await genCost(costs[video!.costIndex]!);
+  if (promoOn) {
+    cost = Number((cost - discount).toFixed(4));
+  }
+  let chatId = ctx.chat!.id;
+  if (VIP.includes(chatId)){
+    await bot.api.sendMessage(chatId, `Благодарю уважаемых випов🤝, ваша скидка составляет ${VIP_DISCOUNT}`);
+    cost = cost - VIP_DISCOUNT;
+
+  }
+  const text = buildVideoMessage(video!, cost);
+
+  const inlineKeyboard = new InlineKeyboard()
+    .text("Оплачено", `pay:${cost},${id}`).row()
+    .text("Назад к списку", "ToVideo");
+
+  await ctx.editMessageText(text, {
+    parse_mode: "MarkdownV2",
+    reply_markup: inlineKeyboard
+  });
 });
-
-
-bot.callbackQuery("video2", async (ctx)=>{
-  ctx.answerCallbackQuery("Загрузка видео 2");
-
-  let cost = await genCost(costs[2]!);
-const stars = `
-
-🌟[За STARS купить тут](https://t.me/d0getrader/1134)`
-
-
-
-  const text = `*"100 МИЛЛИОНОВ ОТ COINBASE"* 💰🔥
-
-*"Разобрано 2 ИИ проекта с ОГРОМНЫМ ПОТЕНЦИАЛОМ"* 🤖🚀
-
-*"Ваш любимый HIGH RISK сегмент"* ⚡🎲
-
-Видео представляет собой _детальный разбор_ и _инвест\-тезис_ по двум ИИ проектам,  
-а также **общие мысли по всему нарративу** 🤝📈  
-
-Готовься: будет _анализ_, _аргументы_ и _честный взгляд на риски_ 💡⚠️
-
-`;
-const requvisits = `Для покупки отправьте USDT💵 в сети ARBITRUM
-К ОПЛАТЕ \\\- \`${cost}\` USDT
-На адресс \\\- \`${WALLET}\``;
-let niceText:string;
-
-if (promoOn===true){
-  cost = cost-discount;
- cost = Number(cost.toFixed(6));
-const requvisitsD = `Для покупки отправьте USDT💵 в сети ARBITRUM
-~СТАРАЯ ЦЕНА \\\- \`${costs[2]}\` USDT~ 🈹
-К ОПЛАТЕ \\\- \`${cost}\` USDT
-На адресс \\\- \`${WALLET}\``;
-
- niceText = escapeMarkdownV2(text) + requvisitsD
-
-} else { niceText = escapeMarkdownV2(text) + requvisits + stars;
-   
-}
-
-  let url=process.env.SELLIG_VIDEO2!;
-  const inlineVideo = new InlineKeyboard()  
-  .text(`Оплачено - ${cost}`,`pay:${cost},${url}`).row()
-  .text(`Назад к списку`,"back").row()
-
-  await ctx.editMessageText(niceText,
-      {
-      parse_mode: "MarkdownV2",
-      reply_markup: inlineVideo,
-    });
-})
-
-
-bot.callbackQuery("video3", async (ctx)=>{
-  ctx.answerCallbackQuery("Загрузка видео 3");
-  let cost = await genCost(costs[3]!);
-  let url=process.env.SELLIG_VIDEO3!;
-  const stars = `
-
-🌟[За STARS купить тут](https://t.me/d0getrader/1179)`
-  
-const requvisits = `Для покупки отправьте USDT💵 в сети ARBITRUM
-К ОПЛАТЕ \\\- \`${cost}\` USDT
-На адресс \\\- \`${WALLET}\``;
-let niceText:string;
-
-  const text = `_Почему ТЫ не заработаешь на АЛЬТЕ?_ 💸
-
-_Сколько ИКСОВ реально можно забрать с КРИПТЫ?_ 🚀
-
-_Что покупать, чтобы не стать кормом КИТОВ?_ 🐳
-
-__Я провёл детальный анализ доходности альткоинов за 5 лет (год-к-году)__.
-📊 *Вычислил вероятность купить скам даже в ТОП-100,*
-🔍 выявил самые надёжные и качественные альткоины,
-📉 разобрался, какие монеты стабильно обнуляются и почему.
-
-На создание этой базы я потратил 7 часов исследований.
-И такой контент объективно не выгоден блогерам, биржам и маркетмейкерам — он мешает им зарабатывать.
-
-Поэтому выкладывать это в открытый доступ — нет смысла. 🔒
-
-`
-
-
-if (promoOn===true){
-  cost = cost-discount;
- cost = Number(cost.toFixed(6));
-const requvisitsD = `Для покупки отправьте USDT💵 в сети ARBITRUM
-~СТАРАЯ ЦЕНА \\\- \`${costs[3]}\` USDT~ 🈹
-К ОПЛАТЕ \\\- \`${cost}\` USDT
-На адресс \\\- \`${WALLET}\``;
-
- niceText = escapeMarkdownV2(text) + requvisitsD
-
-} else { niceText = escapeMarkdownV2(text) + requvisits + stars;
-   
-}
-
-  const inlineVideo = new InlineKeyboard()
-  .text(`Оплачено - ${cost}`,`pay:${cost},${url}`).row()
-  .text(`Назад к списку`,"back").row()
-
-
-
- 
-  await ctx.editMessageText(niceText,
-      {
-        parse_mode: "MarkdownV2",
-      reply_markup: inlineVideo,
-    });
-})
-
-
-
-bot.callbackQuery("video4", async (ctx)=>{
-  ctx.answerCallbackQuery("Загрузка видео 4");
-
-let cost = await genCost(costs[4]!);
-
-let niceText;
-
-  const stars = `
-
-🌟[За STARS купить тут](https://t.me/d0getrader/1231)`
-
-
-let text = `*"99% крипанов совершают ЭТУ ОШИБКУ"* ❗🔥
-
-*"Моя ТЕХНОЛОГИЯ выбора и набора КРИПТО АКТИВОВ"* ⚙️💎
-
-*"Активы для УСТОЙЧИВОГО РОСТА капитала"* 📈🌱
-
-Сделал ролик по _наболевшей теме_ 🎥  
-Разобрал одну **ГЛАВНУЮ ошибку** всех криптовалютчиков при работе с портфелем ⚠️  
-
-Показал два примера:  
-- _ПЛОХОГО_  портфеля ❌  
-- _ХОРОШЕГО_  портфеля ✅  
-
-И дал **чёткую технологию**, как собирать _ХОРОШИЙ \(прибыльный\)_ портфель шаг за шагом 💼✨
-
-`;
-
-const requvisits = `Для покупки отправьте USDT💵 в сети ARBITRUM
-К ОПЛАТЕ \\\- \`${cost}\` USDT
-На адресс \\\- \`${WALLET}\``;
-
-
-if (promoOn===true){
-  cost = cost-discount;
- cost = Number(cost.toFixed(6));
-const requvisitsD = `Для покупки отправьте USDT💵 в сети ARBITRUM
-~СТАРАЯ ЦЕНА \\\- \`${costs[4]}\` USDT~ 🈹
-К ОПЛАТЕ \\\- \`${cost}\` USDT
-На адресс \\\- \`${WALLET}\``;
-
- niceText = escapeMarkdownV2(text) + requvisitsD
-
-} else { niceText = escapeMarkdownV2(text) + requvisits+stars;
-   
-}
-
-
-  let url=process.env.SELLIG_VIDEO4!;
-  const inlineVideo = new InlineKeyboard()  
-  .text(`Оплачено - ${cost}`,`pay:${cost},${url}`).row()
-  .text(`Назад к списку`,"back").row()
-
-
-
-  await ctx.editMessageText(niceText,
-      {
-        parse_mode: "MarkdownV2",
-      reply_markup: inlineVideo,
-    });
-})
-
-
-
-bot.callbackQuery("video5", async (ctx)=>{
-  ctx.answerCallbackQuery("Загрузка видео 5");
-  let cost =await genCost(costs[5]!);
-  let url=process.env.SELLIG_VIDEO5!;
-
-    const stars = `
-
-🌟[За STARS купить тут](https://t.me/d0getrader/1362)`
-
-let niceText;
-let text =`_КТО И НА ЧЁМ ( НА КОМ ) ЗАРАБАТЫВАЕТ В КРИПТЕ_ ?  🐋🍆🐹
-
-_ПОЧЕМУ БУДУЧИ РИТЕЙЛОМ, ТЫ ОБРЕЧЁН ТЕРЯТЬ_?
-
-_ПРАКТИЧЕСКИЕ СОВЕТЫ: КАК ПЕРЕЛОМИТЬ СИТУАЦИЮ_.
-
-Сделал ролик на интересную тему. Изучил, на чём и как зарабатывают сильные мира сего в криптовалютах.
- Казалось бы, ответ очевиден на хомяках, но всё не так просто. 
-
-По результатам исследования, сделал выводы, что конкретно нужно делать рядовому хомяку,
- чтобы значительно увеличить свои шансы на получение прибыли.
-
-`;
-  const requvisits = `Для покупки отправьте USDT💵 в сети ARBITRUM
-К ОПЛАТЕ \\\- \`${cost}\` USDT
-На адресс \\\- \`${WALLET}\``;
-
-if (promoOn===true){
-  cost = cost-discount;
- cost = Number(cost.toFixed(6));
-const requvisitsD = `Для покупки отправьте USDT💵 в сети ARBITRUM
-~СТАРАЯ ЦЕНА \\\- \`${costs[5]}\` USDT~ 🈹
-К ОПЛАТЕ \\\- \`${cost}\` USDT
-На адресс \\\- \`${WALLET}\``;
-
- niceText = escapeMarkdownV2(text) + requvisitsD
-
-} else { niceText = escapeMarkdownV2(text) + requvisits + stars;
-   
-}
-
-
-  const inlineVideo = new InlineKeyboard()  
-  .text(`Оплачено - ${cost}`,`pay:${cost},${url}`).row()
-  .text(`Назад к списку`,"back").row()
-
-
-  await ctx.editMessageText(niceText,
-      {
-        parse_mode: "MarkdownV2",
-      reply_markup: inlineVideo,
-    });
-})
-
-
-
-
-bot.callbackQuery("video6", async (ctx)=>{
-  ctx.answerCallbackQuery("Загрузка видео 6");
-
-  let cost =await genCost(costs[6]!);
-  let url=process.env.SELLIG_VIDEO6!;
-
-    const stars = `
-
-🌟[За STARS купить тут]()`
-
-let niceText;
-let text =`_ПРОДАЮ ВСЮ АЛЬТУ_ !  😈
-
-_ПОЧЕМУ ЦЕНЫ НА ЩИТКИ БУДУТ ИДТИ ТОЛЬКО ВНИЗ_?
-
-_ЛУЧШАЯ ИНВЕСТИЦИЯ В КРИПТУ в ДАННЫЙ МОМЕНТ_.
-
-Сделал ролик на тяжелую тему. Проговорил, что делаю сейчас с щитками и другой лоу кап-альтой.
-Считаю, что холдить ИХ сейчас ОПАСНО, перелился в менее рисковый класс активов.Видос решил сделать, премиум, чтобы не сеять панику.
-
-
-`;
-  const requvisits = `Для покупки отправьте USDT💵 в сети ARBITRUM
-К ОПЛАТЕ \\\- \`${cost}\` USDT
-На адресс \\\- \`${WALLET}\``;
-
-if (promoOn===true){
-  cost = cost-discount;
- cost = Number(cost.toFixed(6));
-const requvisitsD = `Для покупки отправьте USDT💵 в сети ARBITRUM
-~СТАРАЯ ЦЕНА \\\- \`${costs[6]}\` USDT~ 🈹
-К ОПЛАТЕ \\\- \`${cost}\` USDT
-На адресс \\\- \`${WALLET}\``;
-
- niceText = escapeMarkdownV2(text) + requvisitsD
-
-} else { niceText = escapeMarkdownV2(text) + requvisits + stars;
-   
-}
-
-
-  const inlineVideo = new InlineKeyboard()  
-  .text(`Оплачено - ${cost}`,`pay:${cost},${url}`).row()
-  .text(`Назад к списку`,"back").row()
-
-
-  await ctx.editMessageText(niceText,
-      {
-        parse_mode: "MarkdownV2",
-      reply_markup: inlineVideo,
-    });
-})
-
 
 
 
 bot.callbackQuery("videoAll", async (ctx)=>{
   ctx.answerCallbackQuery("Загрузка всех видео");
 let cost =await genCost(sumCosts);
-
 
 const sumCostsOld = (costs[1]! + costs[2]! + costs[3]! + costs[4]! + costs[5]! + costs[6]! )
 let niceText;
@@ -527,8 +383,8 @@ let text =`Все ролики - за один клик, хорошеe реше�
    
 
   const inlineVideo = new InlineKeyboard()  
-  .text(`Оплачено - ${cost}`,`pay:${cost},1`).row()
-  .text(`Назад к списку`,"back").row()
+  .text(`Оплачено - ${cost}`,`pay:${cost},999`).row()
+  .text(`Назад к списку`,"ToVideo").row()
 
 
   await ctx.editMessageText(niceText,
@@ -572,37 +428,37 @@ const stars = `
   );
 });
 
-
-
-bot.callbackQuery("back", async (ctx)=>{
-  ctx.answerCallbackQuery("Возврат в меню");
-    let text = `
-🎥 Вот список видео.
-Подробнее о каждом ролике можно прочитать, кликнув на соответствующую кнопку ниже.
-Здесь — краткая характеристика каждого выпуска 👇
-
-1️⃣ — Разобрал _трейдинг от А до Я_ и объяснил, почему он не работает у 99% трейдеров ⚠️📉
-
-2️⃣ — Мой инвест-тезис по *двум перспективным альтам* 🚀
-
-3️⃣ — Мощное исследование: _7 часов анализа альткоинов, уложенные в 15 минут интенсивного контента_ 📊
-
-4️⃣ — Технология успешного набора портфеля: какие ошибки совершают  все, и как их избежать 💼
-
-5️⃣ — Как обычные хомяки становятся кормом для рынка, и _что делать_, чтобы не повторить их путь 🐹➡️🐳`
-    await ctx.editMessageText(
-    escapeMarkdownV2(text),
+bot.callbackQuery("back", async (ctx) => {
+  await ctx.answerCallbackQuery("Возврашаемся назад");
+  let text = await getStartMess();
+  await ctx.editMessageText(
+   escapeMarkdownV2(text),
     {
       parse_mode: "MarkdownV2",
       reply_markup: menuboard
     }
   );
-})
+});
+
+
+
+bot.callbackQuery("ToVideo", async (ctx) => {
+  await ctx.answerCallbackQuery("Возврашаемся назад");
+  let text =await getVideoText();
+  await ctx.editMessageText(
+   escapeMarkdownV2(text),
+    {
+      parse_mode: "MarkdownV2",
+      reply_markup: videoboard
+    }
+  );
+});
+
 
 
 bot.callbackQuery("rules", async (ctx)=>{
   ctx.answerCallbackQuery("Загружаю правила");
-const board = new InlineKeyboard().text("Список видео","video_list");
+const board = new InlineKeyboard().text("Назад","back");
   let text = `🎥 Здарова, криптовалютчик\!  
 Бот для доступа к эксклюзивному контенту на связи 👋💎  
 
@@ -641,35 +497,33 @@ bot.on("callback_query:data", async (ctx) =>{
    
   } 
     //normal logic
- 
-           
 
-const oldInt = userIntervals.get(chatId);
+    const callback = ctx.callbackQuery.data
+    if (callback.startsWith("pay:")) {
+ const oldInt = userIntervals.get(chatId);
 if (oldInt) clearInterval(oldInt);
 
 const oldTimeout = userTimeouts.get(chatId);
 if (oldTimeout) clearTimeout(oldTimeout);
     console.log("♻️ Старый интервал очищен");
 
-  
-    const callback = ctx.callbackQuery.data
-    if (callback.startsWith("pay:")) {
       oneClickOneMove.set(chatId,true);
     const payload = callback.replace("pay:", "");
     let parts = payload.split(",");
     let costStr = parts.shift();
-    let urls;
-    if (parts[0] == "1") {
+    let urls:string[] = [];;
+    if (parts[0] == "999") {
        urls = Allurl
     } else {
-     urls = parts;}
+    let n = Number(parts[0])
+     if (urlArr[n] == undefined) {throw new Error("Error in n - URL")}
+     urls[0] = urlArr[n];}
     let cost = parseFloat(costStr!);
 
     
     console.log(`💰 Оплата: ${cost}, 🎥 URL: ${urls}`);
   let  intervalId = setInterval(async () => {
   try {
-    if (url === undefined) {throw new Error("Wrong URL")} 
    let done = await checkTrans(cost,urls,chatId);
    if (done) {
      clearInterval(intervalId);

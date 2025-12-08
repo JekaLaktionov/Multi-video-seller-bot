@@ -339,14 +339,15 @@ bot.callbackQuery(/^video(\d+)$/, async (ctx) => {
   
   await ctx.answerCallbackQuery(`Загрузка видео ${id}`);
 
-  let cost = await genCost(costs[video!.costIndex]!);
+  const baseCost = await genCost(costs[video!.costIndex]!);
+  let cost =  baseCost;
   if (promoOn) {
     cost = Number((cost - discount).toFixed(4));
   }
   let chatId = ctx.chat!.id;
   if (VIP.includes(chatId)){
     await bot.api.sendMessage(chatId, `Благодарю уважаемых випов🤝, ваша скидка составляет ${VIP_DISCOUNT}`);
-    cost = cost - VIP_DISCOUNT;
+    cost = Number((baseCost - VIP_DISCOUNT).toFixed(4));
 
   }
   const text = buildVideoMessage(video!, cost);

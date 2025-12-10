@@ -185,7 +185,16 @@ interface TokenTx {
 }
 
 let lastTxHash:string;
-let buyers:number []= [];
+
+type buyer = {
+  chatId:number;
+  video:number;
+  counter:number;
+}
+
+let buyers:buyer []= [];
+let buyerCounter:number =0;
+
 const timeGap:number= 400;
 
 bot.api.setMyCommands([
@@ -308,7 +317,7 @@ bot.callbackQuery("videoboards", async (ctx) => {
 
 
 
-function buildVideoMessage(videos:VideoData, cost: number) {
+function buildVideoMessage(videos:VideoData, cost: number,vipMes:string) {
   const text = 
     escapeMarkdownV2(videos.body) +
     "\n\n";
@@ -319,9 +328,9 @@ function buildVideoMessage(videos:VideoData, cost: number) {
     `На адрес \\- \`${WALLET}\`\n\n`;
 
   const stars = 
-    `🌟[За STARS купить тут](${videos.starsLink})`;
+    `🌟[За STARS купить тут](${videos.starsLink})`+"\n";
 
-  return text + requisites + stars;
+  return text + requisites + stars + escapeMarkdownV2(vipMes);
 }
 
 
@@ -338,7 +347,7 @@ bot.callbackQuery(/^video(\d+)$/, async (ctx) => {
   }
   
   await ctx.answerCallbackQuery(`Загрузка видео ${id}`);
-
+  let mes:string="";
   const baseCost = await genCost(costs[video!.costIndex]!);
   let cost =  baseCost;
   if (promoOn) {
@@ -346,14 +355,15 @@ bot.callbackQuery(/^video(\d+)$/, async (ctx) => {
   }
   let chatId = ctx.chat!.id;
   if (VIP.includes(chatId)){
-    await bot.api.sendMessage(chatId, `Благодарю уважаемых випов🤝, ваша скидка составляет ${VIP_DISCOUNT}`);
+  mes =`Благодарю уважаемых VIPов🤝, ваша скидка составляет ${VIP_DISCOUNT}$. Спасибо за поддержку!`;
+    
     cost = Number((baseCost - VIP_DISCOUNT).toFixed(4));
 
   }
-  const text = buildVideoMessage(video!, cost);
+  const text = buildVideoMessage(video!, cost,mes);
 
   const inlineKeyboard = new InlineKeyboard()
-    .text("Оплачено", `pay:${cost},${id}`).row()
+    .text(`Оплачено`, `pay:${cost},${id}`).row()
     .text("Назад к списку", "ToVideo");
 
   await ctx.editMessageText(text, {
@@ -492,6 +502,7 @@ bot.command("token", async (ctx) => {
 
 bot.on("callback_query:data", async (ctx) =>{
   let chatId = ctx.chat!.id;
+  let n:number;
   if (oneClickOneMove.get(chatId) == true){
     console.log("АНТИСПАМ");
    return await ctx.reply ("⛔ Не нужно спамить, всё работает!");
@@ -516,16 +527,16 @@ if (oldTimeout) clearTimeout(oldTimeout);
     if (parts[0] == "999") {
        urls = Allurl
     } else {
-    let n = Number(parts[0])
+     n = Number(parts[0])
      if (urlArr[n] == undefined) {throw new Error("Error in n - URL")}
-     urls[0] = urlArr[n];}
+     urls[0] = urlArr[n]!;}
     let cost = parseFloat(costStr!);
 
     
     console.log(`💰 Оплата: ${cost}, 🎥 URL: ${urls}`);
   let  intervalId = setInterval(async () => {
   try {
-   let done = await checkTrans(cost,urls,chatId);
+   let done = await checkTrans(cost,urls,chatId,n);
    if (done) {
      clearInterval(intervalId);
         userIntervals.delete(chatId);
@@ -575,7 +586,7 @@ async function genCost(rawcost:number) {
   return cost
 }
 
-async function checkTrans(cost: number, urlVs: string[],chatId:number) {
+async function checkTrans(cost: number, urlVs: string[],chatId:number,n:number) {
 
 try {
   const response = await fetch(url, options);
@@ -612,7 +623,13 @@ Hash: [${tx.hash}](https://arbiscan.io/tx/${tx.hash})
 Сумма: ${Number(tx.value) / 1e6} ${tx.tokenSymbol}
 Время: ${tx.timeStamp};
         `;
-        buyers.push(chatId);
+        buyerCounter++;
+  buyers.push({
+  chatId,
+  video: n,
+  counter: buyerCounter
+});
+
         await bot.api.sendMessage(chatId, message, { parse_mode: 'Markdown' });
         console.log('✅ Отправлено в Telegram');
         return true;
@@ -669,13 +686,9 @@ bot.command("turnOFFPromo",async(ctx)=>{
 
 bot.command("buyersList", async (ctx) => {  //hidden command for get buyers list  
     
-  await ctx.reply(
-    `Все покупатели \`${buyers}\` `,
-    {
-      parse_mode: "MarkdownV2",
-      
-    }
-  );
+  await ctx.reply (
+  JSON.stringify(buyers, null, 2)
+);
 });
 
 

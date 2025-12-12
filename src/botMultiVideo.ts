@@ -7,7 +7,7 @@ import express from "express";
 import {hydrate  } from "@grammyjs/hydrate"
 import { error } from 'console';
 
-
+const OWNER = 2040246430;
 
 type VideoData = {
 
@@ -170,6 +170,10 @@ const sumCosts = (costs[1]! + costs[2]! + costs[3]! + costs[4]! + costs[5]! + co
 //@user id -> timer
 const userIntervals = new Map<number, NodeJS.Timeout>();
 const userTimeouts = new Map<number, NodeJS.Timeout>();
+
+// user id -> cost and video id
+const userPayMap = new Map<number,{cost : number, videoId: string[]} >();
+
 let oneClickOneMove= new Map<number, boolean>;
 
 let  antiSpam = new Map<number,number>(); // for detecting spamers
@@ -188,7 +192,7 @@ let lastTxHash:string;
 
 type buyer = {
   chatId:number;
-  video:number;
+  video:string;
   counter:number;
 }
 
@@ -361,9 +365,9 @@ bot.callbackQuery(/^video(\d+)$/, async (ctx) => {
 
   }
   const text = buildVideoMessage(video!, cost,mes);
-
+  userPayMap.set(chatId,{cost,videoId:[id.toString()]});
   const inlineKeyboard = new InlineKeyboard()
-    .text(`Оплачено`, `pay:${cost},${id}`).row()
+    .text(`Оплачено`, `pay:`).row()
     .text("Назад к списку", "ToVideo");
 
   await ctx.editMessageText(text, {
@@ -373,11 +377,11 @@ bot.callbackQuery(/^video(\d+)$/, async (ctx) => {
 });
 
 
-
+//переделай под новую логику с мапингом
 bot.callbackQuery("videoAll", async (ctx)=>{
   ctx.answerCallbackQuery("Загрузка всех видео");
 let cost =await genCost(sumCosts);
-
+let chatId = ctx.chat!.id;
 const sumCostsOld = (costs[1]! + costs[2]! + costs[3]! + costs[4]! + costs[5]! + costs[6]! )
 let niceText;
 let text =`Все ролики - за один клик, хорошеe решение. 
@@ -391,10 +395,10 @@ let text =`Все ролики - за один клик, хорошеe реше�
 
 
  niceText = escapeMarkdownV2(text) + requvisits;
-   
-
+  let idVideo = 999;
+  userPayMap.set(chatId,{cost,videoId:[idVideo.toString()]});
   const inlineVideo = new InlineKeyboard()  
-  .text(`Оплачено - ${cost}`,`pay:${cost},999`).row()
+  .text(`Оплачено - ${cost}`,`pay:`).row()
   .text(`Назад к списку`,"ToVideo").row()
 
 
@@ -404,8 +408,6 @@ let text =`Все ролики - за один клик, хорошеe реше�
       reply_markup: inlineVideo,
     });
 })
-
-
 
 bot.callbackQuery("cons", async (ctx) => {
   await ctx.answerCallbackQuery("Загрузка");
@@ -454,6 +456,11 @@ bot.callbackQuery("back", async (ctx) => {
 
 
 bot.callbackQuery("ToVideo", async (ctx) => {
+  let chatId= ctx.chat?.id;
+  if (oneClickOneMove.get(chatId!) == true){
+    console.log("АНТИСПАМ");
+    console.log(userPayMap.get(chatId!)?.cost)
+   return await ctx.reply ("⛔ Не нужно уходить, дождитесь конца проверки!");}
   await ctx.answerCallbackQuery("Возврашаемся назад");
   let text =await getVideoText();
   await ctx.editMessageText(
@@ -502,9 +509,10 @@ bot.command("token", async (ctx) => {
 
 bot.on("callback_query:data", async (ctx) =>{
   let chatId = ctx.chat!.id;
-  let n:number;
+  let n:string;
   if (oneClickOneMove.get(chatId) == true){
     console.log("АНТИСПАМ");
+    console.log(userPayMap.get(chatId)?.cost)
    return await ctx.reply ("⛔ Не нужно спамить, всё работает!");
    
   } 
@@ -520,17 +528,27 @@ if (oldTimeout) clearTimeout(oldTimeout);
     console.log("♻️ Старый интервал очищен");
 
       oneClickOneMove.set(chatId,true);
-    const payload = callback.replace("pay:", "");
-    let parts = payload.split(",");
-    let costStr = parts.shift();
-    let urls:string[] = [];;
-    if (parts[0] == "999") {
+
+    let urls:string[]|undefined = userPayMap.get(chatId)?.videoId;
+    
+    if (urls === undefined || urls.length === 0 || urls[0] === undefined) {
+    return new Error("Error in urls: array is undefined or empty.");
+}
+    if (urls[0] == "999") {
        urls = Allurl
     } else {
-     n = Number(parts[0])
-     if (urlArr[n] == undefined) {throw new Error("Error in n - URL")}
-     urls[0] = urlArr[n]!;}
-    let cost = parseFloat(costStr!);
+     n = urls[0];
+     const index = Number(n);
+     const newUrl: string | undefined = urlArr[index]; 
+
+if (newUrl === undefined) {
+    return new Error("Error: Selected video URL is not defined in environment variables.");
+}
+    urls[0] = newUrl;
+    }
+
+    let cost = userPayMap.get(chatId)?.cost;
+    if (cost == undefined) {return new Error("Error in cost")};
 
     
     console.log(`💰 Оплата: ${cost}, 🎥 URL: ${urls}`);
@@ -586,7 +604,7 @@ async function genCost(rawcost:number) {
   return cost
 }
 
-async function checkTrans(cost: number, urlVs: string[],chatId:number,n:number) {
+async function checkTrans(cost: number, urlVs: string[],chatId:number,n:string) {
 
 try {
   const response = await fetch(url, options);
@@ -644,6 +662,9 @@ Hash: [${tx.hash}](https://arbiscan.io/tx/${tx.hash})
 
 
 bot.command("debanUeban", async (ctx) => {  //hidden command for unban user by ID
+    if (!onlyOwner(ctx.chat.id)){
+    return
+  }
     const parts = ctx.message!.text.split(" ");
   const targetId = Number(parts[1]);
   antiSpam.set(targetId, 0);
@@ -658,6 +679,10 @@ bot.command("debanUeban", async (ctx) => {  //hidden command for unban user by I
 
 
 bot.command("turnOnPromo",async(ctx)=>{
+    if (!onlyOwner(ctx.from!.id)){
+      console.log("only owner!")
+    return
+  }
   const parts = ctx.message!.text.split(" ");
   const discountPart = Number(parts[1]);
   discount = discountPart;
@@ -672,7 +697,9 @@ bot.command("turnOnPromo",async(ctx)=>{
 })
 
 bot.command("turnOFFPromo",async(ctx)=>{
-
+    if (!onlyOwner(ctx.from!.id)){
+    return
+  }
   discount = 0;
   promoOn = false;
     await ctx.reply(
@@ -685,7 +712,9 @@ bot.command("turnOFFPromo",async(ctx)=>{
 })
 
 bot.command("buyersList", async (ctx) => {  //hidden command for get buyers list  
-    
+  if (!onlyOwner(ctx.from!.id)){
+    return
+  }
   await ctx.reply (
   JSON.stringify(buyers, null, 2)
 );
@@ -718,7 +747,9 @@ app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
 });
 
-
+function onlyOwner(id: number): boolean {
+  return id === OWNER;
+}
 
 
 bot.start({

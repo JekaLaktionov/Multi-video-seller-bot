@@ -106,7 +106,15 @@ _ЛУЧШАЯ ИНВЕСТИЦИЯ В КРИПТУ в ДАННЫЙ МОМЕНТ_
     costIndex:6,
 },
     7: {
-    body: `.`,
+    body: `_4 ПРИЗНАКА ХОМЯКА_🐹
+    
+    _Из-за ЭТО ЛЮДИ ТЕРЯЮТ МИЛЛИОНЫ_
+    
+    _Как СТАТЬ АЛЬФА-ХОМЯКОМ и начать зарабатывать_!
+    
+    Я сделал ультимативный ролик, в который вложил 4 года своего опыта, и дал ответ на простой вопрос: "Как хомяки теряют деньги?"
+Дело даже не в альтсезоне, а в ряде очень ГРУБЫХ ошибок и ловушек мышления. Как обычно, предложил и решения этих проблем.
+    `,
     starsLink:'',
     costIndex:7,
 },    8: {
@@ -259,6 +267,7 @@ function escapeMarkdownV2(text: string) {
   .text(`Видео 4 - ${costs[4]}$`,"video4").row()
   .text(`Видео 5 - ${costs[5]}$`,"video5").row()
   .text(`Видео 6 - ${costs[6]}$`,"video6").row()
+  .text(`Видео 7 - ${costs[7]}$`,"video7").row()
   .text(`Все видео в один клик - ${sumCosts}$`,"videoAll").row()
   .text("Назад","back").row();
 
@@ -358,7 +367,7 @@ bot.callbackQuery(/^video(\d+)$/, async (ctx) => {
     cost = Number((cost - discount).toFixed(4));
   }
   let chatId = ctx.chat!.id;
-  if (VIP.includes(chatId)){
+  if (VIP.includes(chatId) && id ==7){
   mes =`Благодарю уважаемых VIPов🤝, ваша скидка составляет ${VIP_DISCOUNT}$. Спасибо за поддержку!`;
     
     cost = Number((baseCost - VIP_DISCOUNT).toFixed(4));

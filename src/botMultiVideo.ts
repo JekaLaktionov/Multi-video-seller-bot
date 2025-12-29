@@ -1,11 +1,11 @@
 export {};
 import fetch from 'node-fetch';
-import {Bot, GrammyError, HttpError, Keyboard, InlineKeyboard,Context  } from 'grammy';
+import {Bot, GrammyError, HttpError, InlineKeyboard  } from 'grammy';
 import dotenv from 'dotenv';
 dotenv.config();
 import express from "express";
 import {hydrate  } from "@grammyjs/hydrate"
-import { error } from 'console';
+
 
 const OWNER = 2040246430;
 
@@ -134,12 +134,132 @@ const VIP_DISCOUNT = 2;
 
 
 
+
 const ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY;
-const ADDRESS = '0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9'; //token
-const CHAIN = '42161';
 const WALLET = process.env.MY_WALLET!;
-const url = `https://api.etherscan.io/v2/api?apikey=${ETHERSCAN_API_KEY}&chainid=${CHAIN}&module=account&action=tokentx&contractaddress=${ADDRESS}&address=${WALLET}&startblock=0&endblock=9999999999&page=1&offset=1&sort=desc`;
 const options = {method: 'GET', body: null};
+const API_BLCK = process.env.BLOCKSCOUT_API;
+const ETH_PRICE = "https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd"
+
+
+enum Chain {
+  ARBITRUM = 0,
+  ETH=1,
+  BASE = 2,
+  OP=3,
+  zkSync_Mainnet = 4,
+  POLYGON = 5,
+  LINEA = 6,
+  SCROLL=7,
+  BERA =8,
+  MANTLE =9,
+  CELO=10
+}
+
+
+
+const chainConfig: Record<Chain, ChainConfig> = {
+  [Chain.ARBITRUM]: {
+    chainId: 42161,
+    tokenAddress: '0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9',
+    explorerTx: 'https://arbiscan.io/tx/',
+    name:"ARBITRUM",
+  },
+  [Chain.ETH]: {
+    chainId: 1,
+    tokenAddress: '0xdac17f958d2ee523a2206206994597c13d831ec7',
+    explorerTx: 'https://etherscan.io/tx/',
+    name:"ETH MAIN",
+  },
+  [Chain.zkSync_Mainnet]: {
+    chainId: 324,
+    tokenAddress: '0x493257fD37EDB34451f62EDf8D2a0C418852bA4C',
+    explorerTx: 'https://explorer.zksync.io/tx/',
+    name:"zkSync",
+  },
+
+  [Chain.POLYGON]: {
+    chainId: 137,
+    tokenAddress: '0xc2132d05d31c914a87c6611c10748aeb04b58e8f',
+    explorerTx: 'https://polygonscan.com/tx/',
+    name:"POLYGON",
+  },
+  [Chain.LINEA]:{
+    chainId:59144,
+    tokenAddress:'0xa219439258ca9da29e9cc4ce5596924745e12b93',
+    explorerTx:'https://lineascan.build/tx/',
+    name:"Linea",
+  },
+    [Chain.SCROLL]:{
+    chainId:534352,
+    tokenAddress:'0xf55BEC9cafDbE8730f096Aa55dad6D22d44099Df',
+    explorerTx:'https://scrollscan.com/tx/',
+    name:"SCROLL",
+  },
+      [Chain.BASE]:{
+    chainId:8453,
+    tokenAddress:'0xfde4c96c8593536e31f229ea8f37b2ada2699bb2',
+    explorerTx:'https://base.blockscout.com/tx/',
+    baseUrl:"https://base.blockscout.com/",
+    name:"BASE"},
+
+    [Chain.OP]:{
+    chainId:10,
+    tokenAddress:'0x94b008aa00579c1307b0ef2c499ad98a8ce58e58',
+    explorerTx:'https://explorer.optimism.io/tx/',
+    baseUrl:"https://explorer.optimism.io/",
+    name:"OP"
+  },
+    [Chain.BERA]: {
+    chainId: 80094,
+    tokenAddress: '0x779Ded0c9e1022225f8E0630b35a9b54bE713736',
+    explorerTx: 'https://beratrail.io/tx/',
+    name: "BERACHAIN"
+  },
+
+  [Chain.CELO]: {
+    chainId: 42220,
+    tokenAddress: '0x48065fbBE25f71C9282ddf5e1cD6D6A887483D5e', 
+    explorerTx: 'https://celoscan.io/tx/',
+    name: "CELO"
+  },
+
+  [Chain.MANTLE]: {
+    chainId: 5000,
+    tokenAddress: '0x779Ded0c9e1022225f8E0630b35a9b54bE713736',
+    explorerTx: 'https://explorer.mantle.xyz/tx/',
+    name: "MANTLE"
+  }};
+
+const chains = Array.from({ length: 10 }, (_, i:Chain) =>
+  (chainConfig[i])
+);
+
+
+
+const chainBord = new InlineKeyboard()
+.text(`${chains[0]?.name}`,"chain0").row()
+.text(`${chains[1]?.name}`,"chain1").row()
+.text(`${chains[2]?.name}`,"chain2").row()
+.text(`${chains[3]?.name}`,"chain3").row()
+.text(`${chains[4]?.name}`,"chain4").row()
+.text(`${chains[5]?.name}`,"chain5").row()
+.text(`${chains[6]?.name}`,"chain6").row()
+.text(`${chains[7]?.name}`,"chain7").row()
+.text(`${chains[8]?.name}`,"chain8").row()
+.text(`${chains[9]?.name}`,"chain9").row()
+.text(`Назад`,"back").row()
+
+
+
+type ChainConfig = {
+  chainId: number;
+  tokenAddress: string;
+  explorerTx: string;
+  baseUrl?:string;
+  name:string;
+};
+
 
 let promoOn = false; //promotion swith
 let discount=0;
@@ -173,19 +293,26 @@ const sumCosts = (costs[1]! + costs[2]! + costs[3]! + costs[4]! + costs[5]! + co
   ];
 
 
-
-
-
 //@user id -> timer
 const userIntervals = new Map<number, NodeJS.Timeout>();
 const userTimeouts = new Map<number, NodeJS.Timeout>();
 
 // user id -> cost and video id
-const userPayMap = new Map<number,{cost : number, videoId: string[]} >();
+const userPayMap = new Map<number,UserPayState >();
 
+
+type UserPayState = {
+  cost: number;
+  videoId: string[];
+  chain?: Chain;
+};
+
+
+// user id -> flag
 let oneClickOneMove= new Map<number, boolean>;
 
 let  antiSpam = new Map<number,number>(); // for detecting spamers
+
 
 
 interface TokenTx {
@@ -218,7 +345,7 @@ bot.api.setMyCommands([
     command: "start", description: "Запуск бота" 
   },
   {
-      command: "token", description: "Смарт контракт токена для оплаты (ЧЕМ ПЛАТИТЬ)" 
+      command: "token", description: "Смарт контракты токенов для оплаты (ЧЕМ ПЛАТИТЬ)" 
   },
 
 ])
@@ -239,6 +366,11 @@ return StartText;
 
 bot.command("start", async (ctx) => {
   let text =await getStartMess();
+  let chatId = ctx.chat!.id;
+   if (checkSpam(chatId)){
+   return await ctx.reply ("⛔ Не нужно уходить, всё работает!");
+  }
+  getOrCreateUserState(chatId);
   await ctx.reply(
    escapeMarkdownV2(text),
     {
@@ -255,11 +387,25 @@ function escapeMarkdownV2(text: string) {
   return text.replace(/([\[\]()~`>#+\-=|{}.!\\])/g, '\\$1');
 }
 
+function createPayUrl(CHAIN:string,ADDRESS:string,chainEnum:Chain) {
+  let url;
+  if (Number(CHAIN) === 8453 || Number(CHAIN) === 10) {
+    url = `${chains[chainEnum]?.baseUrl}api?module=account&action=tokentx&contractaddress=${ADDRESS}&address=${WALLET}&page=1&offset=1&sort=desc&apikey=${API_BLCK}`;
+     console.log(url)
+       return url;
+  } else {
+    url = `https://api.etherscan.io/v2/api?apikey=${ETHERSCAN_API_KEY}&chainid=${CHAIN}&module=account&action=tokentx&contractaddress=${ADDRESS}&address=${WALLET}&startblock=0&endblock=9999999999&page=1&offset=1&sort=desc`;
+   return url; 
+  }
+
+}
+
 
   const menuboard = new InlineKeyboard()
   .text(`Правила использования бота`,"rules").row()
   .text("Закрытая видеобиблиотека", "videoboards").row()
-  .text(`Консультации по криптовалюте`,"cons").row();
+  .text(`Консультации по криптовалюте`,"cons").row()
+  .text(`Смена блокчейна для оплаты`,`chainSwith`).row();
 
   const videoboard = new InlineKeyboard()
   .text(`Видео 1 - ${costs[1]}$`,"video1").row()
@@ -276,6 +422,10 @@ function escapeMarkdownV2(text: string) {
 
 bot.callbackQuery("menu", async (ctx) => {
   await ctx.answerCallbackQuery("Загрузка списка....");
+    let chatId = ctx.chat!.id;
+   if (checkSpam(chatId)){
+   return await ctx.reply ("⛔ Не нужно уходить, всё работает!");
+  }
   let text = `
 Добро пожаловать в меню бота.
 Ниже, описано, что делают кнопки меню 👇
@@ -319,6 +469,10 @@ return text
 
 
 bot.callbackQuery("videoboards", async (ctx) => {
+    let chatId = ctx.chat!.id;
+   if (checkSpam(chatId)){
+   return await ctx.reply ("⛔ Не нужно уходить, всё работает!");
+  }
   await ctx.answerCallbackQuery("Загрузка списка....");
   let text = await getVideoText();
   await ctx.editMessageText(escapeMarkdownV2(text),
@@ -331,13 +485,13 @@ bot.callbackQuery("videoboards", async (ctx) => {
 
 
 
-function buildVideoMessage(videos:VideoData, cost: number,vipMes:string) {
+function buildVideoMessage(videos:VideoData, cost: number,vipMes:string,chainConf:ChainConfig) {
   const text = 
     escapeMarkdownV2(videos.body) +
     "\n\n";
 
   const requisites =
-    `Для покупки отправьте USDT 💵 в сети ARBITRUM\n` +
+    `Для покупки отправьте USDT 💵 в сети *${chainConf.name}*\n` +
     `К ОПЛАТЕ \\- \`${cost}\` USDT\n` +
     `На адрес \\- \`${WALLET}\`\n\n`;
 
@@ -346,6 +500,47 @@ function buildVideoMessage(videos:VideoData, cost: number,vipMes:string) {
 
   return text + requisites + stars + escapeMarkdownV2(vipMes);
 }
+
+function checkSpam(chatId: number): boolean {
+  return oneClickOneMove.get(chatId) === true;
+}
+
+
+bot.callbackQuery(/^chain(\d+)$/, async(ctx) => {
+  
+  const idChain:Chain = Number(ctx.match[1]);
+  let chatId = ctx.chat!.id;
+
+    if (!(idChain in Chain)) {
+    await ctx.answerCallbackQuery("Неизвестная сеть");
+    return;
+  }
+  
+  const curChain = chainConfig[idChain];
+let state = userPayMap.get(chatId);
+
+state!.chain = idChain;
+console.log(state?.chain)
+
+
+  await ctx.answerCallbackQuery(`Установен чейн ${curChain.name}`);
+});
+
+
+
+bot.callbackQuery("chainSwith", async(ctx) => {
+  let chatId= ctx.chat!.id;
+  let data = getOrCreateUserState(chatId);
+ let chain = chainConfig[data.chain!]
+  let text =`✅ Текущая сеть: **${chain.name}**
+
+🔗 Контракт USDT: ${chain.tokenAddress}`;
+  await ctx.answerCallbackQuery(`Меню чейнов`);
+    await ctx.editMessageText(escapeMarkdownV2(text), {
+    parse_mode: "MarkdownV2",
+    reply_markup: chainBord
+  });
+})
 
 
 
@@ -360,6 +555,7 @@ bot.callbackQuery(/^video(\d+)$/, async (ctx) => {
     return;
   }
   
+  
   await ctx.answerCallbackQuery(`Загрузка видео ${id}`);
   let mes:string="";
   const baseCost = await genCost(costs[video!.costIndex]!);
@@ -368,14 +564,18 @@ bot.callbackQuery(/^video(\d+)$/, async (ctx) => {
     cost = Number((cost - discount).toFixed(4));
   }
   let chatId = ctx.chat!.id;
+ let data = getOrCreateUserState(chatId);
+    let chain = chainConfig[data?.chain!];
+    console.log(chain.name)
   if (VIP.includes(chatId) && id ==7){
   mes =`Благодарю уважаемых VIPов🤝, ваша скидка составляет ${VIP_DISCOUNT}$. Спасибо за поддержку!`;
     
     cost = Number((baseCost - VIP_DISCOUNT).toFixed(4));
 
   }
-  const text = buildVideoMessage(video!, cost,mes);
-  userPayMap.set(chatId,{cost,videoId:[id.toString()]});
+  const text = buildVideoMessage(video!, cost,mes,chain);
+  data.cost = cost;
+  data.videoId = [id.toString()];
   const inlineKeyboard = new InlineKeyboard()
     .text(`Оплачено`, `pay:`).row()
     .text("Назад к списку", "ToVideo");
@@ -387,11 +587,36 @@ bot.callbackQuery(/^video(\d+)$/, async (ctx) => {
 });
 
 
-//переделай под новую логику с мапингом
+
+function getOrCreateUserState(chatId: number): UserPayState {
+  let state = userPayMap.get(chatId);
+  if (!state) {
+    state = getUserDefault();
+    userPayMap.set(chatId, state);
+  }
+  return state;
+}
+
+
+function getUserDefault(): UserPayState {
+  console.log("Работает")
+  return {
+    cost: 0,
+    videoId:[],
+    chain: Chain.ARBITRUM
+  };
+}
+
+
+
+
 bot.callbackQuery("videoAll", async (ctx)=>{
+    let chatId = ctx.chat!.id; 
+   if (checkSpam(chatId)){
+   return await ctx.reply ("⛔ Не нужно уходить, всё работает!");
+  }
   ctx.answerCallbackQuery("Загрузка всех видео");
 let cost =await genCost(sumCosts);
-let chatId = ctx.chat!.id;
 const sumCostsOld = (costs[1]! + costs[2]! + costs[3]! + costs[4]! + costs[5]! + costs[6]! )
 let niceText;
 let text =`Все ролики - за один клик, хорошеe решение. 
@@ -452,6 +677,10 @@ const stars = `
 });
 
 bot.callbackQuery("back", async (ctx) => {
+  let chatId = ctx.chat!.id; 
+   if (checkSpam(chatId)){
+   return await ctx.reply ("⛔ Не нужно уходить, всё работает!");
+  }
   await ctx.answerCallbackQuery("Возврашаемся назад");
   let text = await getStartMess();
   await ctx.editMessageText(
@@ -467,10 +696,9 @@ bot.callbackQuery("back", async (ctx) => {
 
 bot.callbackQuery("ToVideo", async (ctx) => {
   let chatId= ctx.chat?.id;
-  if (oneClickOneMove.get(chatId!) == true){
-    console.log("АНТИСПАМ");
-    console.log(userPayMap.get(chatId!)?.cost)
-   return await ctx.reply ("⛔ Не нужно уходить, дождитесь конца проверки!");}
+     if (checkSpam(chatId!)){
+   return await ctx.reply ("⛔ Не нужно уходить, дождитесь конца проверки!");
+  }
   await ctx.answerCallbackQuery("Возврашаемся назад");
   let text =await getVideoText();
   await ctx.editMessageText(
@@ -507,9 +735,24 @@ const board = new InlineKeyboard().text("Назад","back");
 
 
 bot.command("token", async (ctx) => {
+  let chainList = [0,1,2,3,4,5,6,7,8,9,10]
+  .map(id =>{
+    let chain = chains[id];
+    if (chain){
+      return ` \\- **${chain?.name}**\\: \n \`${chain?.tokenAddress}\``;
+    }
+    return null;
+  })
+  .filter(item=>item !== null)
+  .join("\n")
+  let mes=`Для оплаты бот использует USDT\\.
 
+  Адрес контракта \— это уникальный идентификатор монеты в блокчейне\\, который позволяет подтвердить\\, что выводимый токен совпадает с выбранным вами токеном\\.
+  
+  Бот принимает оплату только официальными токенами с указаных ниже смарт\\-контрактов\\:
+  ${chainList}` 
   await ctx.reply(
-    `  Сеть ARBITRUM USDT \$ \n\n Смарт контракт токена\, который принимает бот   \`${ADDRESS}\` \n\n СЮДА НЕ ПЛАТИТЬ`,
+    (mes),
     {
       parse_mode: "MarkdownV2"
     }
@@ -556,15 +799,18 @@ if (newUrl === undefined) {
 }
     urls[0] = newUrl;
     }
-
-    let cost = userPayMap.get(chatId)?.cost;
-    if (cost == undefined) {return new Error("Error in cost")};
-
+    let data = userPayMap.get(chatId)
+    let cost = data?.cost;
+    if (cost == undefined) {return console.error("Error in cost")};
     
+    let chain = data?.chain;
+    console.log(chain)
+    if (chain == undefined) {return console.error("Error in chain")};
+
     console.log(`💰 Оплата: ${cost}, 🎥 URL: ${urls}`);
   let  intervalId = setInterval(async () => {
   try {
-   let done = await checkTrans(cost,urls,chatId,n);
+   let done = await checkTrans(cost,urls,chatId,n,chain);
    if (done) {
      clearInterval(intervalId);
         userIntervals.delete(chatId);
@@ -614,11 +860,28 @@ async function genCost(rawcost:number) {
   return cost
 }
 
-async function checkTrans(cost: number, urlVs: string[],chatId:number,n:string) {
 
+
+async function checkTrans(cost: number, urlVs: string[],chatId:number,n:string,chain:Chain) {
+ let chainData = chainConfig[chain];
+
+
+const controller = new AbortController();
+let url = createPayUrl(chainData.chainId.toString(), chainData.tokenAddress,chain).trim();
+console.log("URL=", url)
+const timeout = setTimeout(() => controller.abort(), 6000);
 try {
-  const response = await fetch(url, options);
+    const response = await fetch(url, {
+  method: 'GET',
+  headers: {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    'Accept': 'application/json'
+  },
+  signal: controller.signal
+});
+
       let data: any;
+console.log("📊 Статус ответа:", response.status, response.statusText);
     try {
       data = await response.json();
     } catch (parseErr) {
@@ -626,11 +889,15 @@ try {
       console.error("❌ Ответ от API не JSON. Текст ответа:", text.slice(0, 400));
       return;
     }
+
+
+
+
   let time = Math.floor(Date.now()/ 1000)
 
       if (data.status === '1') {
       const tx:TokenTx = data.result[0];
-      console.log( tx, "ОТПРАВКА-", tx.from, "ЦЕНА-", tx.value,"TIME -", tx.timeStamp);
+      console.log( tx+ "ОТПРАВКА-"+ tx.from+ "ЦЕНА-"+ tx.value+"TIME -"+ tx.timeStamp);
       console.log( lastTxHash);
       if (tx.hash !== lastTxHash && tx.from.toLowerCase() !== WALLET.toLowerCase() && Number(tx.value) / 1e6 >= cost && 
         time - tx.timeStamp <= timeGap)
@@ -645,7 +912,7 @@ try {
 ВАШ РОЛИК, ПРИЯТНОГО ПРОСМОТРА 🔥
 ${links}
 
-Hash: [${tx.hash}](https://arbiscan.io/tx/${tx.hash})
+Hash: [${tx.hash}](${chainData.explorerTx}${tx.hash})
 От: ${tx.from}
 Кому: ${tx.to}
 Сумма: ${Number(tx.value) / 1e6} ${tx.tokenSymbol}
@@ -665,10 +932,16 @@ Hash: [${tx.hash}](https://arbiscan.io/tx/${tx.hash})
     }
 
 
-} catch (error) {
-  console.error(error);
-  
-}return false }
+} catch (e: any) {
+  if (e.name === 'AbortError') {
+    console.log("⚠️ Запрос отменен по тайм-ауту (6 секунд вышли)");
+  } else {
+    console.error("❌ Ошибка запроса:", e.message);
+  }
+}
+finally {console.log("Fetch killed");
+   clearTimeout(timeout);}
+return false }
 
 
 bot.command("debanUeban", async (ctx) => {  //hidden command for unban user by ID

@@ -330,6 +330,7 @@ type buyer = {
   chatId:number;
   video:string;
   counter:number;
+  chain:string;
 }
 
 let buyers:buyer []= [];
@@ -922,7 +923,8 @@ Hash: [${tx.hash}](${chainData.explorerTx}${tx.hash})
   buyers.push({
   chatId,
   video: n,
-  counter: buyerCounter
+  counter: buyerCounter,
+  chain:chainData.name
 });
 
         await bot.api.sendMessage(chatId, message, { parse_mode: 'Markdown' });
@@ -944,7 +946,7 @@ finally {console.log("Fetch killed");
 return false }
 
 
-bot.command("debanUeban", async (ctx) => {  //hidden command for unban user by ID
+bot.command("debanUeban", async (ctx) => {
     if (!onlyOwner(ctx.chat.id)){
     return
   }

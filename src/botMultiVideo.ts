@@ -1,6 +1,6 @@
 export {};
 import fetch from 'node-fetch';
-import {Bot, GrammyError, HttpError, InlineKeyboard  } from 'grammy';
+import {Bot, GrammyError, HttpError, InlineKeyboard, InputFile  } from 'grammy';
 import dotenv from 'dotenv';
 dotenv.config();
 import express from "express";
@@ -1018,7 +1018,21 @@ bot.command("buyersList", async (ctx) => {  //hidden command for get buyers list
 );
 });
 
-
+bot.command("sendData", async (ctx) => { 
+  if (!onlyOwner(ctx.from!.id)){
+    return
+  }
+  const filePath = path.join(__dirname, "buyersData.json");
+  try {
+    await ctx.replyWithDocument(new InputFile(filePath),{
+      caption: `📊 Актуальная копия базы данных.
+Число покупателей = ${buyers.length} `,
+    });
+  } catch (error) {
+    console.error("Ошибка при отправке файла:", error);
+    await ctx.reply("Не удалось отправить файл. Возможно, он ещё не создан.");
+  }
+});
 
 bot.catch((err)=>{
     const ctx = err.ctx;

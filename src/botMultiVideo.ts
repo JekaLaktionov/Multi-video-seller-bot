@@ -5,7 +5,8 @@ import dotenv from 'dotenv';
 dotenv.config();
 import express from "express";
 import {hydrate  } from "@grammyjs/hydrate"
-
+import fs from "fs";
+import path from "path";
 
 const OWNER = 2040246430;
 
@@ -19,29 +20,6 @@ type VideoData = {
 
 const videos: Record<number, VideoData> = {
   1: {
-    body: `\"Как ЗАРАБОТАТЬ НА ТРЕЙДИНГЕ?\"\n\n` +
-    `\"Почему там 97\% теряет ВСЁ\"\n\n` +
-    `\"Рабочие \"Стратегии\" в трейдинге\"\n\n` +
-    'Вот видос с ТИТАНОВОЙ базой по трейдингу 🦾, такое нельзя выкладывать в открытый доступ.\n'
-    ,
-    starsLink: 'https://t.me/d0getrader/1112',
-    costIndex: 1,
-  },
-  2: {
-    body: `*"100 МИЛЛИОНОВ ОТ COINBASE"* 💰🔥
-
-*"Разобрано 2 ИИ проекта с ОГРОМНЫМ ПОТЕНЦИАЛОМ"* 🤖🚀
-
-*"Ваш любимый HIGH RISK сегмент"* ⚡🎲
-
-Видео представляет собой _детальный разбор_ и _инвест-тезис_ по двум ИИ проектам,  
-а также **общие мысли по всему нарративу** 🤝📈  
-
-Готовься: будет _анализ_, _аргументы_ и _честный взгляд на риски_ 💡⚠️`,
-    starsLink: 'https://t.me/d0getrader/1134',
-    costIndex: 2,
-  },
-  3: {
     body: `_Почему ТЫ не заработаешь на АЛЬТЕ?_ 💸
 
 _Сколько ИКСОВ реально можно забрать с КРИПТЫ?_ 🚀
@@ -58,10 +36,10 @@ __Я провёл детальный анализ доходности альт�
 
 Поэтому выкладывать это в открытый доступ — нет смысла. 🔒`,
     starsLink:'https://t.me/d0getrader/1179',
-    costIndex:3
+    costIndex:1
   },
-  4: {
-    body: `*"99% крипанов совершают ЭТУ ОШИБКУ"* ❗🔥
+  2: {
+    body: `*"99% криптанов совершают ЭТУ ОШИБКУ"* ❗🔥
 
 *"Моя ТЕХНОЛОГИЯ выбора и набора КРИПТО АКТИВОВ"* ⚙️💎
 
@@ -76,9 +54,9 @@ __Я провёл детальный анализ доходности альт�
 
 И дал **чёткую технологию**, как собирать _ХОРОШИЙ \(прибыльный\)_ портфель шаг за шагом 💼✨`,
     starsLink:'https://t.me/d0getrader/1231',
-    costIndex:4,
+    costIndex:2,
   },
-    5: {
+    3: {
     body: `_КТО И НА ЧЁМ ( НА КОМ ) ЗАРАБАТЫВАЕТ В КРИПТЕ_ ?  🐋🍆🐹
 
 _ПОЧЕМУ БУДУЧИ РИТЕЙЛОМ, ТЫ ОБРЕЧЁН ТЕРЯТЬ_?
@@ -91,9 +69,9 @@ _ПРАКТИЧЕСКИЕ СОВЕТЫ: КАК ПЕРЕЛОМИТЬ СИТУАЦ
 По результатам исследования, сделал выводы, что конкретно нужно делать рядовому хомяку,
  чтобы значительно увеличить свои шансы на получение прибыли.`,
     starsLink:'https://t.me/d0getrader/1362',
-    costIndex:5,
+    costIndex:3,
 },
-    6: {
+    4: {
     body: `_ПРОДАЮ ВСЮ АЛЬТУ_ !  😈
 
 _ПОЧЕМУ ЦЕНЫ НА ЩИТКИ БУДУТ ИДТИ ТОЛЬКО ВНИЗ_?
@@ -103,9 +81,9 @@ _ЛУЧШАЯ ИНВЕСТИЦИЯ В КРИПТУ в ДАННЫЙ МОМЕНТ_
 Сделал ролик на тяжелую тему. Проговорил, что делаю сейчас с щитками и другой лоу кап-альтой.
 Считаю, что холдить ИХ сейчас ОПАСНО, перелился в менее рисковый класс активов.Видос решил сделать, премиум, чтобы не сеять панику.`,
     starsLink:'https://t.me/d0getrader/1473',
-    costIndex:6,
+    costIndex:4,
 },
-    7: {
+    5: {
     body: `    _4 ПРИЗНАКА ХОМЯКА_🐹
     
     _Из-за ЭТО ЛЮДИ ТЕРЯЮТ МИЛЛИОНЫ_
@@ -117,15 +95,15 @@ _ЛУЧШАЯ ИНВЕСТИЦИЯ В КРИПТУ в ДАННЫЙ МОМЕНТ_
     Дело даже не в альтсезоне, а в ряде очень ГРУБЫХ ошибок и ловушек мышления. Как обычно, предложил и решения этих проблем.
     `,
     starsLink:'',
+    costIndex:5,
+},    6: {
+    body: `.`,
+    starsLink:'',
+    costIndex:6,},
+      7: {
+    body: `.`,
+    starsLink:'',
     costIndex:7,
-},    8: {
-    body: `.`,
-    starsLink:'',
-    costIndex:8,},
-      9: {
-    body: `.`,
-    starsLink:'',
-    costIndex:9,
   }}
 
 
@@ -371,7 +349,6 @@ bot.command("start", async (ctx) => {
    if (checkSpam(chatId)){
    return await ctx.reply ("⛔ Не нужно уходить, всё работает!");
   }
-  getOrCreateUserState(chatId);
   await ctx.reply(
    escapeMarkdownV2(text),
     {
@@ -402,6 +379,41 @@ function createPayUrl(CHAIN:string,ADDRESS:string,chainEnum:Chain) {
 }
 
 
+const filePath = path.join(__dirname, "buyersData.json");
+
+
+
+if(fs.existsSync(filePath)){
+try {
+        const data = fs.readFileSync(filePath, { encoding: 'utf8' });
+        
+        if (data) {
+            buyers = JSON.parse(data);
+            console.log(`✅ Загружено из файла: ${buyers.length} объектов`);
+        }
+    } catch (err) {
+        console.error("❌ Ошибка при чтении или парсинге JSON:", err);
+        
+        buyers = [];
+    }
+} else {
+    console.log("ℹ️ Файл базы данных еще не создан, начинаем с чистого листа.");
+    buyers = [];
+}
+
+
+
+function saveData(){
+ fs.writeFile(filePath,JSON.stringify(buyers), (err) => {
+  if (err) {
+    console.error("Ошибка записи:", err);
+    return;
+  }
+
+  console.log("Файл успешно сохранён");
+})};
+
+
   const menuboard = new InlineKeyboard()
   .text(`Правила использования бота`,"rules").row()
   .text("Закрытая видеобиблиотека", "videoboards").row()
@@ -414,8 +426,8 @@ function createPayUrl(CHAIN:string,ADDRESS:string,chainEnum:Chain) {
   .text(`Видео 3 - ${costs[3]}$`,"video3").row()
   .text(`Видео 4 - ${costs[4]}$`,"video4").row()
   .text(`Видео 5 - ${costs[5]}$`,"video5").row()
-  .text(`Видео 6 - ${costs[6]}$`,"video6").row()
-  .text(`Видео 7 - ${costs[7]}$`,"video7").row()
+ // .text(`Видео 6 - ${costs[6]}$`,"video6").row()
+ // .text(`Видео 7 - ${costs[7]}$`,"video7").row()
   .text(`Все видео в один клик - ${sumCosts}$`,"videoAll").row()
   .text("Назад","back").row();
 
@@ -454,17 +466,13 @@ async function getVideoText(){
 Подробнее о каждом ролике можно прочитать, кликнув на соответствующую кнопку ниже.
 Здесь — краткая характеристика каждого выпуска 👇
 
-1️⃣ — Разобрал _трейдинг от А до Я_ и объяснил, почему он не работает у 99% трейдеров ⚠️📉
+1️⃣ — Мощное исследование: _7 часов анализа альткоинов, уложенные в 15 минут интенсивного контента_ 📊
 
-2️⃣ — Мой инвест-тезис по *двум перспективным альтам* 🚀
+2️⃣ — Технология успешного набора портфеля: какие ошибки совершают  все, и как их избежать 💼
 
-3️⃣ — Мощное исследование: _7 часов анализа альткоинов, уложенные в 15 минут интенсивного контента_ 📊
+3️⃣ — Как обычные хомяки становятся кормом для рынка, и _что делать_, чтобы не повторить их путь 🐹➡️🐳
 
-4️⃣ — Технология успешного набора портфеля: какие ошибки совершают  все, и как их избежать 💼
-
-5️⃣ — Как обычные хомяки становятся кормом для рынка, и _что делать_, чтобы не повторить их путь 🐹➡️🐳
-
-6️⃣ - Что делать с щитками, чтобы вынять, хоть что-то, инвест тезис по мощной акции⚠️`
+4️⃣ - Что делать с щитками, чтобы вынять, хоть что-то, инвест тезис по мощной акции⚠️`
 return text
 }
 
@@ -511,7 +519,7 @@ bot.callbackQuery(/^chain(\d+)$/, async(ctx) => {
   
   const idChain:Chain = Number(ctx.match[1]);
   let chatId = ctx.chat!.id;
-
+  getOrCreateUserState(chatId);
     if (!(idChain in Chain)) {
     await ctx.answerCallbackQuery("Неизвестная сеть");
     return;
@@ -567,7 +575,13 @@ bot.callbackQuery(/^video(\d+)$/, async (ctx) => {
   let chatId = ctx.chat!.id;
  let data = getOrCreateUserState(chatId);
     let chain = chainConfig[data?.chain!];
-    console.log(chain.name)
+
+// DEV FUNCTION
+    if(OWNER == chatId){
+      cost = Number((cost * 0.02).toFixed(4))
+    }
+
+    //
   if (VIP.includes(chatId) && id ==7){
   mes =`Благодарю уважаемых VIPов🤝, ваша скидка составляет ${VIP_DISCOUNT}$. Спасибо за поддержку!`;
     
@@ -919,14 +933,13 @@ Hash: [${tx.hash}](${chainData.explorerTx}${tx.hash})
 Сумма: ${Number(tx.value) / 1e6} ${tx.tokenSymbol}
 Время: ${tx.timeStamp};
         `;
-        buyerCounter++;
   buyers.push({
   chatId,
   video: n,
-  counter: buyerCounter,
+  counter: buyers.length,
   chain:chainData.name
 });
-
+saveData();
         await bot.api.sendMessage(chatId, message, { parse_mode: 'Markdown' });
         console.log('✅ Отправлено в Telegram');
         return true;
@@ -1004,6 +1017,7 @@ bot.command("buyersList", async (ctx) => {  //hidden command for get buyers list
   JSON.stringify(buyers, null, 2)
 );
 });
+
 
 
 bot.catch((err)=>{

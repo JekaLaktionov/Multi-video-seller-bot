@@ -126,18 +126,19 @@ const ETH_PRICE = "https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs
 
 
 enum Chain {
-  ARBITRUM = 0,
-  ETH=1,
-  BASE = 2,
-  OP=3,
-  zkSync_Mainnet = 4,
-  POLYGON = 5,
-  LINEA = 6,
-  SCROLL=7,
-  BERA =8,
-  MANTLE =9,
-  CELO=10
+  ARBITRUM = "ARBITRUM",
+  ETH = "ETH",
+  BASE = "BASE",
+  OP = "OP",
+  zkSync_Mainnet = "zkSync_Mainnet",
+  POLYGON = "POLYGON",
+  LINEA = "LINEA",
+  SCROLL = "SCROLL",
+  BERA = "BERA",
+  MANTLE = "MANTLE",
+  CELO = "CELO"
 }
+
 
 
 
@@ -214,24 +215,22 @@ const chainConfig: Record<Chain, ChainConfig> = {
     name: "MANTLE"
   }};
 
-const chains = Array.from({ length: 10 }, (_, i:Chain) =>
-  (chainConfig[i])
-);
 
 
+const chainIds = Object.values(Chain);
 
-const chainBord = new InlineKeyboard()
-.text(`${chains[0]?.name}`,"chain0").row()
-.text(`${chains[1]?.name}`,"chain1").row()
-.text(`${chains[2]?.name}`,"chain2").row()
-.text(`${chains[3]?.name}`,"chain3").row()
-.text(`${chains[4]?.name}`,"chain4").row()
-.text(`${chains[5]?.name}`,"chain5").row()
-.text(`${chains[6]?.name}`,"chain6").row()
-.text(`${chains[7]?.name}`,"chain7").row()
-.text(`${chains[8]?.name}`,"chain8").row()
-.text(`${chains[9]?.name}`,"chain9").row()
-.text(`Назад`,"back").row()
+
+const chainBord = new InlineKeyboard();
+
+for (const chainId of chainIds) {
+  const chain = chainConfig[chainId];
+  if (!chain) continue;
+
+  chainBord.text(chain.name, `chain_${chainId}`).row();
+}
+
+chainBord.text("Назад", "back");
+
 
 
 
@@ -373,7 +372,7 @@ function escapeMarkdownV2(text: string) {
 function createPayUrl(CHAIN:string,ADDRESS:string,chainEnum:Chain) {
   let url;
   if (Number(CHAIN) === 8453 || Number(CHAIN) === 10) {
-    url = `${chains[chainEnum]?.baseUrl}api?module=account&action=tokentx&contractaddress=${ADDRESS}&address=${WALLET}&page=1&offset=1&sort=desc&apikey=${API_BLCK}`;
+    url = `${chainConfig[chainEnum]?.baseUrl}api?module=account&action=tokentx&contractaddress=${ADDRESS}&address=${WALLET}&page=1&offset=1&sort=desc&apikey=${API_BLCK}`;
      console.log(url)
        return url;
   } else {
@@ -520,32 +519,38 @@ function checkSpam(chatId: number): boolean {
 }
 
 
-bot.callbackQuery(/^chain(\d+)$/, async(ctx) => {
-  
-  const idChain:Chain = Number(ctx.match[1]);
-  let chatId = ctx.chat!.id;
-  getOrCreateUserState(chatId);
-    if (!(idChain in Chain)) {
-    await ctx.answerCallbackQuery("Неизвестная сеть");
-    return;
+bot.callbackQuery(/^chain_(.+)$/, async (ctx) => {
+  const chainKey = ctx.match[1] as Chain;
+
+  if (!(chainKey in chainConfig)) {
+    return ctx.answerCallbackQuery("Неизвестная сеть");
   }
-  
-  const curChain = chainConfig[idChain];
-let state = userPayMap.get(chatId);
 
-state!.chain = idChain;
-console.log(state?.chain)
+  const chatId = ctx.chat!.id;
+  const state = getOrCreateUserState(chatId);
 
+  state.chain = chainKey;
 
-  await ctx.answerCallbackQuery(`Установен чейн ${curChain.name}`);
+  await ctx.answerCallbackQuery(
+    `Установлен чейн ${chainConfig[chainKey].name}`
+  );
 });
+
+
 
 
 
 bot.callbackQuery("chainSwith", async(ctx) => {
   let chatId= ctx.chat!.id;
   let data = getOrCreateUserState(chatId);
+  console.log("CHAIN KEY:", data.chain);
+console.log("AVAILABLE:", Object.keys(chainConfig));
+
  let chain = chainConfig[data.chain!]
+
+  if (!chain.name){
+    return ctx.reply("Опять всё крашнулось")
+  }
   let text =`✅ Текущая сеть: **${chain.name}**
 
 🔗 Контракт USDT: ${chain.tokenAddress}`;
@@ -754,30 +759,30 @@ const board = new InlineKeyboard().text("Назад","back");
 });
 
 
-bot.command("token", async (ctx) => {
-  let chainList = [0,1,2,3,4,5,6,7,8,9,10]
-  .map(id =>{
-    let chain = chains[id];
-    if (chain){
-      return ` \\- **${chain?.name}**\\: \n \`${chain?.tokenAddress}\``;
-    }
-    return null;
-  })
-  .filter(item=>item !== null)
-  .join("\n")
-  let mes=`Для оплаты бот использует USDT\\.
+// bot.command("token", async (ctx) => {
+//   let chainList = [0,1,2,3,4,5,6,7,8,9,10]
+//   .map(id =>{
+//     let chain = chains[id];
+//     if (chain){
+//       return ` \\- **${chain?.name}**\\: \n \`${chain?.tokenAddress}\``;
+//     }
+//     return null;
+//   })
+//   .filter(item=>item !== null)
+//   .join("\n")
+//   let mes=`Для оплаты бот использует USDT\\.
 
-  Адрес контракта \— это уникальный идентификатор монеты в блокчейне\\, который позволяет подтвердить\\, что выводимый токен совпадает с выбранным вами токеном\\.
+//   Адрес контракта \— это уникальный идентификатор монеты в блокчейне\\, который позволяет подтвердить\\, что выводимый токен совпадает с выбранным вами токеном\\.
   
-  Бот принимает оплату только официальными токенами с указаных ниже смарт\\-контрактов\\:
-  ${chainList}` 
-  await ctx.reply(
-    (mes),
-    {
-      parse_mode: "MarkdownV2"
-    }
-  );
-});
+//   Бот принимает оплату только официальными токенами с указаных ниже смарт\\-контрактов\\:
+//   ${chainList}` 
+//   await ctx.reply(
+//     (mes),
+//     {
+//       parse_mode: "MarkdownV2"
+//     }
+//   );
+// });
 
 
 bot.on("callback_query:data", async (ctx) =>{

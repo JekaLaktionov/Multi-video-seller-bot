@@ -7,8 +7,13 @@ import express from "express";
 import {hydrate  } from "@grammyjs/hydrate"
 import fs from "fs";
 import path from "path";
+// import { a } from './walletSoft';
+
+//  console.log("Импортированный адрес:", a);
+
 
 const OWNER = 2040246430;
+
 
 type VideoData = {
 
@@ -300,6 +305,7 @@ interface TokenTx {
   value: number;
   tokenSymbol: string;
   timeStamp: number;
+  tokenDecimal:number;
 }
 
 let lastTxHash:string;
@@ -312,7 +318,6 @@ type buyer = {
 }
 
 let buyers:buyer []= [];
-let buyerCounter:number =0;
 
 const timeGap:number= 400;
 
@@ -616,7 +621,7 @@ function getOrCreateUserState(chatId: number): UserPayState {
 function getUserDefault(): UserPayState {
   console.log("Работает")
   return {
-    cost: 0,
+    cost: 1000,
     videoId:[],
     chain: Chain.ARBITRUM
   };
@@ -913,8 +918,8 @@ console.log("📊 Статус ответа:", response.status, response.statusT
       if (data.status === '1') {
       const tx:TokenTx = data.result[0];
       console.log( tx+ "ОТПРАВКА-"+ tx.from+ "ЦЕНА-"+ tx.value+"TIME -"+ tx.timeStamp);
-      console.log( lastTxHash);
-      if (tx.hash !== lastTxHash && tx.from.toLowerCase() !== WALLET.toLowerCase() && Number(tx.value) / 1e6 >= cost && 
+      let decimals =10 ** (tx.tokenDecimal);
+      if (tx.hash !== lastTxHash && tx.from.toLowerCase() !== WALLET.toLowerCase() && (tx.value) >= (cost) * decimals && 
         time - tx.timeStamp <= timeGap)
        { 
         lastTxHash = tx.hash;
@@ -1081,3 +1086,4 @@ bot.start({
 
 
 // прем покупатели 7600112142,5566365178
+//"start": "nodemon --ignore '*.json' src/botMultiVideo.ts"

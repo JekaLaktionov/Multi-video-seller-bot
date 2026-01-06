@@ -16,6 +16,7 @@
     "@grammyjs/hydrate": "^1.6.0",
     "build": "^0.1.4",
     "dotenv": "^17.2.3",
+    "ethers": "^6.16.0",
     "express": "^5.1.0",
     "grammy": "^1.38.3",
     "node-fetch": "^3.3.2",

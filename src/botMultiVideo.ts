@@ -7,6 +7,7 @@ import express from "express";
 import {hydrate  } from "@grammyjs/hydrate"
 import fs from "fs";
 import path from "path";
+import { error } from 'console';
 // import { a } from './walletSoft';
 
 //  console.log("Импортированный адрес:", a);
@@ -217,16 +218,16 @@ const chainConfig: Record<Chain, ChainConfig> = {
 
 
 
-const chainIds = Object.values(Chain);
+const allChainNames = Object.values(Chain);
 
 
 const chainBord = new InlineKeyboard();
 
-for (const chainId of chainIds) {
-  const chain = chainConfig[chainId];
+for (const chainName of allChainNames) {
+  const chain = chainConfig[chainName];
   if (!chain) continue;
 
-  chainBord.text(chain.name, `chain_${chainId}`).row();
+  chainBord.text(chainName, `chain_${chainName}`).row();
 }
 
 chainBord.text("Назад", "back");
@@ -255,7 +256,7 @@ bot.use(hydrate()as any);
 
 // costs
 const costs = Array.from({ length: 10 }, (_, i) =>
-  Number(process.env[`PRICE${i}`])
+  Number(process.env[`PRICE${i}`] ?? 0)
 );
 
 
@@ -263,17 +264,22 @@ const urlArr = Array.from({ length: 10 }, (_, i) =>
   (process.env[`SELLIG_VIDEO${i}`])
 );
 
+console.log("Старая",urlArr)
 
-const sumCosts = (costs[1]! + costs[2]! + costs[3]! + costs[4]! + costs[5]! + costs[6]! )*0.80;
-  let Allurl=[
-    process.env.SELLIG_VIDEO1!,
-    process.env.SELLIG_VIDEO2!,
-    process.env.SELLIG_VIDEO3!,
-    process.env.SELLIG_VIDEO4!,
-    process.env.SELLIG_VIDEO5!,
-    process.env.SELLIG_VIDEO6!
-  ];
+const sumCosts =
+  costs
+    .filter(Number.isFinite)
+    .reduce((sum, cost) => sum + cost, 0) * 0.8;
 
+
+
+
+    
+const Allurl: string[] = urlArr.filter(
+  (v): v is string => typeof v === "string"
+);
+
+console.log("Новая",Allurl)
 
 //@user id -> timer
 const userIntervals = new Map<number, NodeJS.Timeout>();
@@ -286,7 +292,7 @@ const userPayMap = new Map<number,UserPayState >();
 type UserPayState = {
   cost: number;
   videoId: string[];
-  chain?: Chain;
+  chain: Chain;
 };
 
 
@@ -425,17 +431,16 @@ function saveData(){
   .text(`Смена блокчейна для оплаты`,`chainSwith`).row();
 
   const videoboard = new InlineKeyboard()
-  .text(`Видео 1 - ${costs[1]}$`,"video1").row()
-  .text(`Видео 2 - ${costs[2]}$`,"video2").row()
-  .text(`Видео 3 - ${costs[3]}$`,"video3").row()
-  .text(`Видео 4 - ${costs[4]}$`,"video4").row()
-  .text(`Видео 5 - ${costs[5]}$`,"video5").row()
- // .text(`Видео 6 - ${costs[6]}$`,"video6").row()
- // .text(`Видео 7 - ${costs[7]}$`,"video7").row()
-  .text(`Все видео в один клик - ${sumCosts}$`,"videoAll").row()
-  .text("Назад","back").row();
+    for (const [index,cost] of costs.entries()){
+    if (!cost) continue;
+  videoboard.text(`Видео ${index} - ${cost}$`,`video${index}`).row()
+
+  }
+   videoboard.text(`Все видео в один клик - ${sumCosts}$`,"videoAll").row()
+    .text("Назад","back").row();
 
 
+  
 
 bot.callbackQuery("menu", async (ctx) => {
   await ctx.answerCallbackQuery("Загрузка списка....");
@@ -543,14 +548,8 @@ bot.callbackQuery(/^chain_(.+)$/, async (ctx) => {
 bot.callbackQuery("chainSwith", async(ctx) => {
   let chatId= ctx.chat!.id;
   let data = getOrCreateUserState(chatId);
-  console.log("CHAIN KEY:", data.chain);
-console.log("AVAILABLE:", Object.keys(chainConfig));
+ let chain = chainConfig[data.chain ?? Chain.ARBITRUM]
 
- let chain = chainConfig[data.chain!]
-
-  if (!chain.name){
-    return ctx.reply("Опять всё крашнулось")
-  }
   let text =`✅ Текущая сеть: **${chain.name}**
 
 🔗 Контракт USDT: ${chain.tokenAddress}`;
@@ -584,7 +583,7 @@ bot.callbackQuery(/^video(\d+)$/, async (ctx) => {
   }
   let chatId = ctx.chat!.id;
  let data = getOrCreateUserState(chatId);
-    let chain = chainConfig[data?.chain!];
+    let chain = chainConfig[data?.chain ?? Chain.ARBITRUM];
 
 // DEV FUNCTION
     if(OWNER == chatId){
@@ -640,23 +639,30 @@ bot.callbackQuery("videoAll", async (ctx)=>{
    if (checkSpam(chatId)){
    return await ctx.reply ("⛔ Не нужно уходить, всё работает!");
   }
-  ctx.answerCallbackQuery("Загрузка всех видео");
+ await ctx.answerCallbackQuery("Загрузка всех видео");
+
 let cost =await genCost(sumCosts);
-const sumCostsOld = (costs[1]! + costs[2]! + costs[3]! + costs[4]! + costs[5]! + costs[6]! )
+
+const sumCostsOld =   costs
+    .filter(Number.isFinite)
+    .reduce((sum, cost) => sum + cost, 0);
 let niceText;
+let {chain} = getOrCreateUserState(chatId);
+
 let text =`Все ролики - за один клик, хорошеe решение. 
 По отдельности цена составила бы ${sumCostsOld}$. 
 А так это выгоднее на 20%.
 
 `;
-  const requvisits = `Для покупки отправьте USDT💵 в сети ARBITRUM
+  const requvisits = `Для покупки отправьте USDT💵 в сети ${chain}
 К ОПЛАТЕ \\\- \`${cost}\` USDT
 На адресс \\\- \`${WALLET}\``;
 
 
  niceText = escapeMarkdownV2(text) + requvisits;
   let idVideo = 999;
-  userPayMap.set(chatId,{cost,videoId:[idVideo.toString()]});
+  
+  userPayMap.set(chatId,{cost,videoId:[idVideo.toString()],chain});
   const inlineVideo = new InlineKeyboard()  
   .text(`Оплачено - ${cost}`,`pay:`).row()
   .text(`Назад к списку`,"ToVideo").row()
@@ -759,30 +765,30 @@ const board = new InlineKeyboard().text("Назад","back");
 });
 
 
-// bot.command("token", async (ctx) => {
-//   let chainList = [0,1,2,3,4,5,6,7,8,9,10]
-//   .map(id =>{
-//     let chain = chains[id];
-//     if (chain){
-//       return ` \\- **${chain?.name}**\\: \n \`${chain?.tokenAddress}\``;
-//     }
-//     return null;
-//   })
-//   .filter(item=>item !== null)
-//   .join("\n")
-//   let mes=`Для оплаты бот использует USDT\\.
+bot.command("token", async (ctx) => {
+  let chainList = allChainNames
+  .map(id =>{
+    let chain = chainConfig[id];
+    if (chain){
+      return ` \\- **${chain?.name}**\\: \n \`${chain?.tokenAddress}\``;
+    }
+    return null;
+  })
+  .filter(item=>item !== null)
+  .join("\n")
+  let mes=`Для оплаты бот использует USDT\\.
 
-//   Адрес контракта \— это уникальный идентификатор монеты в блокчейне\\, который позволяет подтвердить\\, что выводимый токен совпадает с выбранным вами токеном\\.
+  Адрес контракта \— это уникальный идентификатор монеты в блокчейне\\, который позволяет подтвердить\\, что выводимый токен совпадает с выбранным вами токеном\\.
   
-//   Бот принимает оплату только официальными токенами с указаных ниже смарт\\-контрактов\\:
-//   ${chainList}` 
-//   await ctx.reply(
-//     (mes),
-//     {
-//       parse_mode: "MarkdownV2"
-//     }
-//   );
-// });
+  Бот принимает оплату только официальными токенами с указаных ниже смарт\\-контрактов\\:
+  ${chainList}` 
+  await ctx.reply(
+    (mes),
+    {
+      parse_mode: "MarkdownV2"
+    }
+  );
+});
 
 
 bot.on("callback_query:data", async (ctx) =>{
@@ -835,6 +841,9 @@ if (newUrl === undefined) {
     console.log(`💰 Оплата: ${cost}, 🎥 URL: ${urls}`);
   let  intervalId = setInterval(async () => {
   try {
+    if (!urls) {
+      return console.error("Error in url")
+    } 
    let done = await checkTrans(cost,urls,chatId,n,chain);
    if (done) {
      clearInterval(intervalId);

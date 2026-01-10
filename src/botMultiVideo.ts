@@ -231,7 +231,7 @@ for (const chainId of chainIds) {
 
 chainBord.text("Назад", "back");
 
-
+//a
 
 
 type ChainConfig = {

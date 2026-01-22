@@ -8,7 +8,7 @@ import {hydrate  } from "@grammyjs/hydrate"
 import fs from "fs";
 import path from "path";
 import { error } from 'console';
-// import { a } from './walletSoft';
+import { createWallets, wallets, start } from "./walletSoft";
 
 //  console.log("Импортированный адрес:", a);
 
@@ -22,6 +22,9 @@ type VideoData = {
   starsLink: string;
   costIndex: number;
 };
+
+
+
 
 
 const videos: Record<number, VideoData> = {
@@ -123,8 +126,9 @@ const ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY;
 const WALLET = process.env.MY_WALLET!;
 const options = {method: 'GET', body: null};
 const API_BLCK = process.env.BLOCKSCOUT_API;
-const ETH_PRICE = "https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd"
+const ETH_PRICE = "https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd";
 
+ let idWallet=1;
 
 enum Chain {
   ARBITRUM = "ARBITRUM",
@@ -137,7 +141,8 @@ enum Chain {
   SCROLL = "SCROLL",
   BERA = "BERA",
   MANTLE = "MANTLE",
-  CELO = "CELO"
+  CELO = "CELO",
+  SEPOLIA ="SEPOLIA"
 }
 
 
@@ -214,6 +219,12 @@ const chainConfig: Record<Chain, ChainConfig> = {
     tokenAddress: '0x779Ded0c9e1022225f8E0630b35a9b54bE713736',
     explorerTx: 'https://explorer.mantle.xyz/tx/',
     name: "MANTLE"
+  },
+    [Chain.SEPOLIA]: {
+    chainId: 11155111,
+    tokenAddress: '0x79D63D5D15e644A355a2D217dEf9E7393b886939',
+    explorerTx: 'https://sepolia.etherscan.io/tx/',
+    name: "TESTNET"
   }};
 
 
@@ -293,6 +304,7 @@ type UserPayState = {
   cost: number;
   videoId: string[];
   chain: Chain;
+  wallet:string;
 };
 
 
@@ -375,14 +387,15 @@ function escapeMarkdownV2(text: string) {
   return text.replace(/([\[\]()~`>#+\-=|{}.!\\])/g, '\\$1');
 }
 
-function createPayUrl(CHAIN:string,ADDRESS:string,chainEnum:Chain) {
+function createPayUrl(CHAIN:string,ADDRESS:string,chainEnum:Chain,wallet:string) {
   let url;
-  if (Number(CHAIN) === 8453 || Number(CHAIN) === 10) {
-    url = `${chainConfig[chainEnum]?.baseUrl}api?module=account&action=tokentx&contractaddress=${ADDRESS}&address=${WALLET}&page=1&offset=1&sort=desc&apikey=${API_BLCK}`;
+  if (Number(CHAIN) === chainConfig[Chain.BASE].chainId || Number(CHAIN) === chainConfig[Chain.OP].chainId) 
+    {
+    url = `${chainConfig[chainEnum]?.baseUrl}api?module=account&action=tokentx&contractaddress=${ADDRESS}&address=${wallet}&page=1&offset=1&sort=desc&apikey=${API_BLCK}`;
      console.log(url)
        return url;
   } else {
-    url = `https://api.etherscan.io/v2/api?apikey=${ETHERSCAN_API_KEY}&chainid=${CHAIN}&module=account&action=tokentx&contractaddress=${ADDRESS}&address=${WALLET}&startblock=0&endblock=9999999999&page=1&offset=1&sort=desc`;
+    url = `https://api.etherscan.io/v2/api?apikey=${ETHERSCAN_API_KEY}&chainid=${CHAIN}&module=account&action=tokentx&contractaddress=${ADDRESS}&address=${wallet}&startblock=0&endblock=9999999999&page=1&offset=1&sort=desc`;
    return url; 
   }
 
@@ -495,6 +508,23 @@ bot.callbackQuery("videoboards", async (ctx) => {
   }
   await ctx.answerCallbackQuery("Загрузка списка....");
   let text = await getVideoText();
+  console.log("Befor",wallets.length)
+  if (wallets.length ===0){
+  await createWallets();
+
+  }
+  console.log("After",wallets.length,idWallet)
+
+
+  let data = getOrCreateUserState(chatId)
+
+if (!data.wallet) {
+  data.wallet = wallets[idWallet] ?? WALLET;
+  idWallet++;
+}
+
+   
+  console.log(data.wallet, idWallet);
   await ctx.editMessageText(escapeMarkdownV2(text),
     {
       parse_mode: "MarkdownV2",
@@ -505,7 +535,7 @@ bot.callbackQuery("videoboards", async (ctx) => {
 
 
 
-function buildVideoMessage(videos:VideoData, cost: number,vipMes:string,chainConf:ChainConfig) {
+function buildVideoMessage(videos:VideoData, cost: number,vipMes:string,chainConf:ChainConfig,wallet:string) {
   const text = 
     escapeMarkdownV2(videos.body) +
     "\n\n";
@@ -513,7 +543,7 @@ function buildVideoMessage(videos:VideoData, cost: number,vipMes:string,chainCon
   const requisites =
     `Для покупки отправьте USDT 💵 в сети *${chainConf.name}*\n` +
     `К ОПЛАТЕ \\- \`${cost}\` USDT\n` +
-    `На адрес \\- \`${WALLET}\`\n\n`;
+    `На адрес \\- \`${wallet}\`\n\n`;
 
   const stars = 
     `🌟[За STARS купить тут](${videos.starsLink})`+"\n";
@@ -568,8 +598,8 @@ bot.callbackQuery("chainSwith", async(ctx) => {
 
 bot.callbackQuery(/^video(\d+)$/, async (ctx) => {
   const id = Number(ctx.match[1]); 
+  
   const video = videos[id];
-
   if (!video) {
     await ctx.answerCallbackQuery("Видео не найдено");
     return;
@@ -578,30 +608,46 @@ bot.callbackQuery(/^video(\d+)$/, async (ctx) => {
   
   await ctx.answerCallbackQuery(`Загрузка видео ${id}`);
   let mes:string="";
-  const baseCost = await genCost(costs[video!.costIndex]!);
-  let cost =  baseCost;
+    let chatId = ctx.chat!.id;
+  let data = getOrCreateUserState(chatId);
+    const saveCost = costs[video.costIndex];
+
+    if (!costs ||video.costIndex === undefined||saveCost === undefined){
+          await ctx.answerCallbackQuery("Цена не найдена");
+    return;
+    }
+    
+  let cost =  saveCost;
+   let userWallet = data.wallet;
+  if(!userWallet || userWallet===WALLET){
+    const baseCost = await genCost(saveCost);
+    cost = baseCost;
+    userWallet = WALLET;
+  }
+
   if (promoOn) {
     cost = Number((cost - discount).toFixed(4));
   }
-  let chatId = ctx.chat!.id;
- let data = getOrCreateUserState(chatId);
+
+ 
     let chain = chainConfig[data?.chain ?? Chain.ARBITRUM];
 
 // DEV FUNCTION
-    if(OWNER == chatId){
-      cost = Number((cost * 0.02).toFixed(4))
-    }
+    // if(OWNER == chatId){
+    //   cost = Number((cost * 0.02).toFixed(4))
+    // }
 
     //
   if (VIP.includes(chatId) && id ==7){
   mes =`Благодарю уважаемых VIPов🤝, ваша скидка составляет ${VIP_DISCOUNT}$. Спасибо за поддержку!`;
     
-    cost = Number((baseCost - VIP_DISCOUNT).toFixed(4));
+    cost = Number((saveCost - VIP_DISCOUNT).toFixed(4));
 
   }
-  const text = buildVideoMessage(video!, cost,mes,chain);
+  const text = buildVideoMessage(video!, cost,mes,chain,userWallet);
   data.cost = cost;
   data.videoId = [id.toString()];
+  
   const inlineKeyboard = new InlineKeyboard()
     .text(`Оплачено`, `pay:`).row()
     .text("Назад к списку", "ToVideo");
@@ -629,7 +675,8 @@ function getUserDefault(): UserPayState {
   return {
     cost: 1000,
     videoId:[],
-    chain: Chain.ARBITRUM
+    chain: Chain.ARBITRUM,
+    wallet:""
   };
 }
 
@@ -649,8 +696,8 @@ const sumCostsOld =   costs
     .filter(Number.isFinite)
     .reduce((sum, cost) => sum + cost, 0);
 let niceText;
-let {chain} = getOrCreateUserState(chatId);
-
+let {chain,wallet} = getOrCreateUserState(chatId);
+console.log(wallet);
 let text =`Все ролики - за один клик, хорошеe решение. 
 По отдельности цена составила бы ${sumCostsOld}$. 
 А так это выгоднее на 20%.
@@ -664,7 +711,7 @@ let text =`Все ролики - за один клик, хорошеe реше�
  niceText = escapeMarkdownV2(text) + requvisits;
   let idVideo = 999;
   
-  userPayMap.set(chatId,{cost,videoId:[idVideo.toString()],chain});
+  userPayMap.set(chatId,{cost,videoId:[idVideo.toString()],chain,wallet});
   const inlineVideo = new InlineKeyboard()  
   .text(`Оплачено - ${cost}`,`pay:`).row()
   .text(`Назад к списку`,"ToVideo").row()
@@ -815,7 +862,11 @@ if (oldTimeout) clearTimeout(oldTimeout);
 
       oneClickOneMove.set(chatId,true);
 
-    let urls:string[]|undefined = userPayMap.get(chatId)?.videoId;
+    let data = userPayMap.get(chatId);
+
+    if (data == undefined) {return console.error("Error in data")};
+
+    let urls:string[] = data.videoId;
     
     if (urls === undefined || urls.length === 0 || urls[0] === undefined) {
     return new Error("Error in urls: array is undefined or empty.");
@@ -832,21 +883,15 @@ if (newUrl === undefined) {
 }
     urls[0] = newUrl;
     }
-    let data = userPayMap.get(chatId)
+
     let cost = data?.cost;
-    if (cost == undefined) {return console.error("Error in cost")};
-    
     let chain = data?.chain;
-    console.log(chain)
-    if (chain == undefined) {return console.error("Error in chain")};
+
 
     console.log(`💰 Оплата: ${cost}, 🎥 URL: ${urls}`);
   let  intervalId = setInterval(async () => {
   try {
-    if (!urls) {
-      return console.error("Error in url")
-    } 
-   let done = await checkTrans(cost,urls,chatId,n,chain);
+   let done = await checkTrans(cost,urls,chatId,n,chain,data?.wallet);
    if (done) {
      clearInterval(intervalId);
         userIntervals.delete(chatId);
@@ -898,12 +943,12 @@ async function genCost(rawcost:number) {
 
 
 
-async function checkTrans(cost: number, urlVs: string[],chatId:number,n:string,chain:Chain) {
+async function checkTrans(cost: number, urlVs: string[],chatId:number,n:string,chain:Chain,wallet:string) {
  let chainData = chainConfig[chain];
 
 
 const controller = new AbortController();
-let url = createPayUrl(chainData.chainId.toString(), chainData.tokenAddress,chain).trim();
+let url = createPayUrl(chainData.chainId.toString(), chainData.tokenAddress,chain,wallet).trim();
 console.log("URL=", url)
 const timeout = setTimeout(() => controller.abort(), 6000);
 try {
@@ -935,7 +980,7 @@ console.log("📊 Статус ответа:", response.status, response.statusT
       const tx:TokenTx = data.result[0];
       console.log( tx+ "ОТПРАВКА-"+ tx.from+ "ЦЕНА-"+ tx.value+"TIME -"+ tx.timeStamp);
       let decimals =10 ** (tx.tokenDecimal);
-      if (tx.hash !== lastTxHash && tx.from.toLowerCase() !== WALLET.toLowerCase() && (tx.value) >= (cost) * decimals && 
+      if (tx.hash !== lastTxHash && tx.from.toLowerCase() !== wallet.toLowerCase() && (tx.value) >= (cost) * decimals && 
         time - tx.timeStamp <= timeGap)
        { 
         lastTxHash = tx.hash;
@@ -962,6 +1007,7 @@ Hash: [${tx.hash}](${chainData.explorerTx}${tx.hash})
 });
 saveData();
         await bot.api.sendMessage(chatId, message, { parse_mode: 'Markdown' });
+        await bot.api.sendMessage(OWNER, message +"ЧЕЙН - "+ chain +"КОШЕЛЬ- "+ wallet, { parse_mode: 'Markdown' });
         console.log('✅ Отправлено в Telegram');
         return true;
       }

@@ -84,17 +84,17 @@ testConnection();
 
 
 
-
+transferETH();
 async function transferETH() {
   const wallet = ethers.HDNodeWallet.fromPhrase(phrase!).connect(provider);
-  for(let i=1;i<300;i++){
+  for(let i=1;i<15;i++){
     console.log ("Start transfering ETH MEGA" )
    let wallets = ethers.HDNodeWallet.fromPhrase(phrase!,undefined,`m/44'/60'/0'/0/${i}`).connect(provider);
    let amountWei = getRandomValue() / 10000;
    const AMOUNT = ethers.parseEther(amountWei.toString());
    const tx = await wallet.sendTransaction({to:wallets.address,value:AMOUNT,nonce:await wallet.getNonce("latest")});
    await tx.wait();
-   console.log(i);
+   console.log(i,wallets.address );
   }
 }
 
@@ -163,13 +163,47 @@ console.log(tx.hash);
 }
 
 
-const tx = await provider.getTransaction("0x32d7f5d95d99010c31f238e641463cc85910eaf9a543428fd9936de087b06f22");
-console.log(tx);
-
-
 const walletMap = Object.fromEntries(
   walletsBalances.map(w => [w.index, w])
 );
+
+//,{nonce:await wallets.getNonce("latest")}
+
+async function createAndSendNFTs() {
+  console.log("Start NFT farm");
+  const abiTransferFrom = [
+  "function transferFrom(address from, address to, uint256 tokenId)"
+];
+  for (let i=5;i<51;i++) {
+  const wallets = ethers.HDNodeWallet.fromPhrase(phrase!,undefined,`m/44'/60'/0'/0/${i}`).connect(provider);
+    const bytecode = (fs.readFileSync("./src/nftByteCode.bin", "utf8")).trim();
+  const abiCode = JSON.parse(fs.readFileSync("./src/nftAbi.json", "utf8"));
+  const factory = new ethers.ContractFactory(abiCode, bytecode, wallets);  
+  try {
+   const contractNFT = await factory.deploy(0,5 + getRandomValue());
+    console.log("Deploy start");
+    await contractNFT.waitForDeployment();
+    await new Promise(r => setTimeout(r, 1000 + getRandomValue()));
+   let addressNFT = await contractNFT.getAddress();
+   const contractTransferFrom = new Contract(addressNFT, abiTransferFrom, wallets);
+   
+   for (let j = 0; j < 3; j++) {
+     const randomUser = await getRandomLastSender();
+     console.log("Random", randomUser, "Wallet", wallets.address);
+     const tx = await contractTransferFrom.transferFrom!(wallets.address, randomUser, j);
+     await tx.wait();
+     console.log(`NFT ${j} sent to ${randomUser}, tx: ${tx.hash}, from ${i}`);
+   }
+   
+  } catch (error) {
+    console.log("Error with deploy", error)
+  }
+  }
+}
+
+
+
+
 
 async function farm() {
   console.log("Start FARMING");
@@ -247,35 +281,40 @@ async function farm() {
 }
 
 
-
+getRandomLastSender()
 async function getRandomLastSender() {
   let i = 1;
     try {
 
         const blockNumber = await provider.getBlockNumber();
+        console.log(blockNumber);
         let rWallet;
-
-        const block = await provider.getBlock(blockNumber, true);
+        const block = await provider.getBlock(blockNumber);
 
         if (!block || block.transactions.length === 0) {
             console.log(`Блок ${blockNumber} пустой, ищу в предыдущем...`);
             return; 
         }
+        const transactions = block.transactions;
 
-        // 3. Выбираем случайную транзакцию из массива
-        const transactions = block.prefetchedTransactions;
-        const randomIndex = Math.floor(Math.random() * transactions.length);
-        const randomTx = transactions[randomIndex];
+        let value = getRandomValue();
 
-        console.log(`📦 Блок: ${blockNumber}`);
-        console.log(`🔗 Всего транзакций: ${transactions.length}`);
+
         
-        if(!randomTx)
+        const randomTx = transactions[value];
+                if(!randomTx)
         {
           rWallet = arrWallets[i]
           i++;
         } else {
-       rWallet = randomTx.from }
+        const singleTx = await block.getTransaction(randomTx);
+         rWallet = singleTx.from;
+        }
+        console.log(`📦 Блок: ${blockNumber}`);
+        console.log(`🔗 Всего транзакций: ${transactions.length}`);
+        
+
+
         console.log(`👤 Случайный отправитель: ${rWallet}`);
 
         return rWallet;

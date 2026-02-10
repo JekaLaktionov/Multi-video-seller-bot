@@ -103,7 +103,14 @@ _ЛУЧШАЯ ИНВЕСТИЦИЯ В КРИПТУ в ДАННЫЙ МОМЕНТ_
     starsLink:'',
     costIndex:5,
 },    6: {
-    body: `.`,
+    body: `_ПРОЕКТ УРОВНЯ AAVE с недооценкой х10_  ! ⭐
+
+_Разобрал ДВЕ УНИКАЛЬНЫЕ МЕТРИКИ_ 
+
+_АЛЬТКОИН - С РЕКОРДНЫМИ ПОКАЗАТЕЛЯМИ_. ✨
+
+Фундаментал уровня Blue Chip (Aave 2.0). Проект не просто копирует гигантов, он создает инфраструктуру ликвидности нового поколения. В то время как Aave доминирует в кредитовании, этот актив захватывает рынок динамических маркет-мейкеров. Это база, на которой строится весь современный DeFi.
+`,
     starsLink:'',
     costIndex:6,},
       7: {
@@ -823,12 +830,11 @@ bot.on("callback_query:data", async (ctx) =>{
 
     const callback = ctx.callbackQuery.data
     if (callback.startsWith("pay:")) {
- cleanupUserState(chatId);
-    console.log("♻️ Старый интервал очищен");
-
+    let data = userPayMap.get(chatId);
+    let urls:string[]|undefined = data?.videoId;
       oneClickOneMove.set(chatId,true);
 
-    let urls:string[]|undefined = userPayMap.get(chatId)?.videoId;
+    
     
     if (urls === undefined || urls.length === 0 || urls[0] === undefined) {
     return new Error("Error in urls: array is undefined or empty.");
@@ -845,7 +851,12 @@ if (newUrl === undefined) {
 }
     urls[0] = newUrl;
     }
-    let data = userPayMap.get(chatId)
+        // Теперь очищаем только интервалы, но НЕ userPayMap
+    const oldInt = userIntervals.get(chatId);
+    if (oldInt) clearInterval(oldInt);
+    const oldTimeout = userTimeouts.get(chatId);
+    if (oldTimeout) clearTimeout(oldTimeout);
+    console.log("♻️ Старый интервал очищен");
     let cost = data?.cost;
     if (cost == undefined) {return console.error("Error in cost")};
     

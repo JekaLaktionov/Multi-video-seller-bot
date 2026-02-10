@@ -288,6 +288,20 @@ const userTimeouts = new Map<number, NodeJS.Timeout>();
 // user id -> cost and video id
 const userPayMap = new Map<number,UserPayState >();
 
+// Cleanup user state function
+function cleanupUserState(chatId: number) {
+  const intervalId = userIntervals.get(chatId);
+  if (intervalId) clearInterval(intervalId);
+  
+  const timeoutId = userTimeouts.get(chatId);
+  if (timeoutId) clearTimeout(timeoutId);
+  
+  userIntervals.delete(chatId);
+  userTimeouts.delete(chatId);
+  oneClickOneMove.delete(chatId);
+  userPayMap.delete(chatId);
+}
+
 
 type UserPayState = {
   cost: number;
@@ -468,7 +482,7 @@ bot.callbackQuery("menu", async (ctx) => {
   );
 });
 
-
+//here 1
 async function getVideoText(){
   let text = `
 🎥 Вот список видео.
@@ -483,7 +497,9 @@ async function getVideoText(){
 
 4️⃣ - Что делать с щитками, чтобы вынять, хоть что-то, инвест тезис по мощной акции⚠️
 
-5️⃣ - Популярно объясню КАК и ПОЧЕМУ, 99% участников рынка теряет деньги 💀`
+5️⃣ - Популярно объясню КАК и ПОЧЕМУ, 99% участников рынка теряет деньги 💀
+
+6️⃣ - Мощнейший DEFI - уровня AAVE с дикой недооценкой🏵️`
 return text
 }
 
@@ -644,19 +660,20 @@ bot.callbackQuery("videoAll", async (ctx)=>{
  await ctx.answerCallbackQuery("Загрузка всех видео");
 
 let cost =await genCost(sumCosts);
-
+console.log(costs)
 const sumCostsOld =   costs
     .filter(Number.isFinite)
     .reduce((sum, cost) => sum + cost, 0);
 let niceText;
 let {chain} = getOrCreateUserState(chatId);
-
+let chainName = chainConfig[chain].name;
+console.log(sumCostsOld)
 let text =`Все ролики - за один клик, хорошеe решение. 
 По отдельности цена составила бы ${sumCostsOld}$. 
 А так это выгоднее на 20%.
 
 `;
-  const requvisits = `Для покупки отправьте USDT💵 в сети ${chain}
+  const requvisits = `Для покупки отправьте USDT💵 в сети ${chainName}
 К ОПЛАТЕ \\\- \`${cost}\` USDT
 На адресс \\\- \`${WALLET}\``;
 
@@ -806,11 +823,7 @@ bot.on("callback_query:data", async (ctx) =>{
 
     const callback = ctx.callbackQuery.data
     if (callback.startsWith("pay:")) {
- const oldInt = userIntervals.get(chatId);
-if (oldInt) clearInterval(oldInt);
-
-const oldTimeout = userTimeouts.get(chatId);
-if (oldTimeout) clearTimeout(oldTimeout);
+ cleanupUserState(chatId);
     console.log("♻️ Старый интервал очищен");
 
       oneClickOneMove.set(chatId,true);
@@ -848,14 +861,7 @@ if (newUrl === undefined) {
     } 
    let done = await checkTrans(cost,urls,chatId,n,chain);
    if (done) {
-     clearInterval(intervalId);
-        userIntervals.delete(chatId);
-
-        const timeoutId = userTimeouts.get(chatId);
-        if (timeoutId) clearTimeout(timeoutId);
-
-        userTimeouts.delete(chatId);
-        oneClickOneMove.delete(chatId)
+     cleanupUserState(chatId);
         console.log("✔️ УСПЕШНО. Мониторинг остановлен.");
    }
   } catch (err) {
@@ -875,10 +881,7 @@ userIntervals.set(chatId, intervalId);
   } catch (err) {
     console.error('❌ Ошибка при отправке сообщения:', err);
   }
-  clearInterval(intervalId);
-  userIntervals.delete(chatId);
-  userTimeouts.delete(chatId);
-  oneClickOneMove.delete(chatId);
+  cleanupUserState(chatId);
   console.log('⏹ Мониторинг остановлен timeout.');
 }, 4 * 60 * 1000);
 userTimeouts.set(chatId, timeoutId);

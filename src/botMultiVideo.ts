@@ -106,7 +106,14 @@ _ЛУЧШАЯ ИНВЕСТИЦИЯ В КРИПТУ в ДАННЫЙ МОМЕНТ_
     starsLink:'',
     costIndex:5,
 },    6: {
-    body: `.`,
+    body: `_ПРОЕКТ УРОВНЯ AAVE с недооценкой х10_  ! ⭐
+
+_Разобрал ДВЕ УНИКАЛЬНЫЕ МЕТРИКИ_ 
+
+_АЛЬТКОИН - С РЕКОРДНЫМИ ПОКАЗАТЕЛЯМИ_. ✨
+
+Фундаментал уровня Blue Chip (Aave 2.0). Проект не просто копирует гигантов, он создает инфраструктуру ликвидности нового поколения. В то время как Aave доминирует в кредитовании, этот актив захватывает рынок динамических маркет-мейкеров. Это база, на которой строится весь современный DeFi.
+`,
     starsLink:'',
     costIndex:6,},
       7: {
@@ -299,6 +306,20 @@ const userTimeouts = new Map<number, NodeJS.Timeout>();
 // user id -> cost and video id
 const userPayMap = new Map<number,UserPayState >();
 
+// Cleanup user state function
+function cleanupUserState(chatId: number) {
+  const intervalId = userIntervals.get(chatId);
+  if (intervalId) clearInterval(intervalId);
+  
+  const timeoutId = userTimeouts.get(chatId);
+  if (timeoutId) clearTimeout(timeoutId);
+  
+  userIntervals.delete(chatId);
+  userTimeouts.delete(chatId);
+  oneClickOneMove.delete(chatId);
+  userPayMap.delete(chatId);
+}
+
 
 type UserPayState = {
   cost: number;
@@ -481,7 +502,7 @@ bot.callbackQuery("menu", async (ctx) => {
   );
 });
 
-
+//here 1
 async function getVideoText(){
   let text = `
 🎥 Вот список видео.
@@ -496,7 +517,9 @@ async function getVideoText(){
 
 4️⃣ - Что делать с щитками, чтобы вынять, хоть что-то, инвест тезис по мощной акции⚠️
 
-5️⃣ - Популярно объясню КАК и ПОЧЕМУ, 99% участников рынка теряет деньги 💀`
+5️⃣ - Популярно объясню КАК и ПОЧЕМУ, 99% участников рынка теряет деньги 💀
+
+6️⃣ - Мощнейший DEFI - уровня AAVE с дикой недооценкой🏵️`
 return text
 }
 
@@ -691,19 +714,20 @@ bot.callbackQuery("videoAll", async (ctx)=>{
  await ctx.answerCallbackQuery("Загрузка всех видео");
 
 let cost =await genCost(sumCosts);
-
+console.log(costs)
 const sumCostsOld =   costs
     .filter(Number.isFinite)
     .reduce((sum, cost) => sum + cost, 0);
 let niceText;
 let {chain,wallet} = getOrCreateUserState(chatId);
-console.log(wallet);
+let chainName = chainConfig[chain].name;
+console.log(sumCostsOld)
 let text =`Все ролики - за один клик, хорошеe решение. 
 По отдельности цена составила бы ${sumCostsOld}$. 
 А так это выгоднее на 20%.
 
 `;
-  const requvisits = `Для покупки отправьте USDT💵 в сети ${chain}
+  const requvisits = `Для покупки отправьте USDT💵 в сети ${chainName}
 К ОПЛАТЕ \\\- \`${cost}\` USDT
 На адресс \\\- \`${WALLET}\``;
 
@@ -853,20 +877,11 @@ bot.on("callback_query:data", async (ctx) =>{
 
     const callback = ctx.callbackQuery.data
     if (callback.startsWith("pay:")) {
- const oldInt = userIntervals.get(chatId);
-if (oldInt) clearInterval(oldInt);
-
-const oldTimeout = userTimeouts.get(chatId);
-if (oldTimeout) clearTimeout(oldTimeout);
-    console.log("♻️ Старый интервал очищен");
-
+    let data = userPayMap.get(chatId);
+    let urls:string[]|undefined = data?.videoId;
       oneClickOneMove.set(chatId,true);
 
-    let data = userPayMap.get(chatId);
-
-    if (data == undefined) {return console.error("Error in data")};
-
-    let urls:string[] = data.videoId;
+    
     
     if (urls === undefined || urls.length === 0 || urls[0] === undefined) {
     return new Error("Error in urls: array is undefined or empty.");
@@ -883,7 +898,12 @@ if (newUrl === undefined) {
 }
     urls[0] = newUrl;
     }
-
+        // Теперь очищаем только интервалы, но НЕ userPayMap
+    const oldInt = userIntervals.get(chatId);
+    if (oldInt) clearInterval(oldInt);
+    const oldTimeout = userTimeouts.get(chatId);
+    if (oldTimeout) clearTimeout(oldTimeout);
+    console.log("♻️ Старый интервал очищен");
     let cost = data?.cost;
     let chain = data?.chain;
 
@@ -893,14 +913,7 @@ if (newUrl === undefined) {
   try {
    let done = await checkTrans(cost,urls,chatId,n,chain,data?.wallet);
    if (done) {
-     clearInterval(intervalId);
-        userIntervals.delete(chatId);
-
-        const timeoutId = userTimeouts.get(chatId);
-        if (timeoutId) clearTimeout(timeoutId);
-
-        userTimeouts.delete(chatId);
-        oneClickOneMove.delete(chatId)
+     cleanupUserState(chatId);
         console.log("✔️ УСПЕШНО. Мониторинг остановлен.");
    }
   } catch (err) {
@@ -920,10 +933,7 @@ userIntervals.set(chatId, intervalId);
   } catch (err) {
     console.error('❌ Ошибка при отправке сообщения:', err);
   }
-  clearInterval(intervalId);
-  userIntervals.delete(chatId);
-  userTimeouts.delete(chatId);
-  oneClickOneMove.delete(chatId);
+  cleanupUserState(chatId);
   console.log('⏹ Мониторинг остановлен timeout.');
 }, 4 * 60 * 1000);
 userTimeouts.set(chatId, timeoutId);

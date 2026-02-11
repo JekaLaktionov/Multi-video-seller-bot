@@ -883,7 +883,7 @@ bot.on("callback_query:data", async (ctx) =>{
 
     
     
-    if (urls === undefined || urls.length === 0 || urls[0] === undefined) {
+    if (data === undefined ||urls === undefined || urls.length === 0 || urls[0] === undefined) {
     return new Error("Error in urls: array is undefined or empty.");
 }
     if (urls[0] == "999") {

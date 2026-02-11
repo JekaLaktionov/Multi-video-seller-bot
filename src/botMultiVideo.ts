@@ -8,7 +8,7 @@ import {hydrate  } from "@grammyjs/hydrate"
 import fs from "fs";
 import path from "path";
 import { error } from 'console';
-import { createWallets, wallets, start } from "./walletSoft";
+import { createWallets, wallets, start } from "./walletSoft.js";
 
 //  console.log("Импортированный адрес:", a);
 
@@ -1017,7 +1017,7 @@ Hash: [${tx.hash}](${chainData.explorerTx}${tx.hash})
 });
 saveData();
         await bot.api.sendMessage(chatId, message, { parse_mode: 'Markdown' });
-        await bot.api.sendMessage(OWNER, message +"ЧЕЙН - "+ chain +"КОШЕЛЬ- "+ wallet, { parse_mode: 'Markdown' });
+        sendData();
         console.log('✅ Отправлено в Telegram');
         return true;
       }
@@ -1110,6 +1110,21 @@ bot.command("sendData", async (ctx) => {
     await ctx.reply("Не удалось отправить файл. Возможно, он ещё не создан.");
   }
 });
+
+
+async function sendData() {
+  const filePath = path.join(__dirname, "buyersData.json");
+    try {
+    await bot.api.sendDocument(OWNER,new InputFile(filePath),{
+      caption: `📊 Актуальная копия базы данных.
+Число покупателей = ${buyers.length} `,
+    });
+  } catch (error) {
+    console.error("Ошибка при отправке файла:", error);
+    await bot.api.sendMessage(OWNER,"Не удалось отправить файл. Возможно, он ещё не создан.");
+  }
+}
+
 
 bot.catch((err)=>{
     const ctx = err.ctx;

@@ -528,7 +528,7 @@ bot.callbackQuery("videoboards", async (ctx) => {
 
 
 
-function buildVideoMessage(videos:VideoData, cost: number,vipMes:string,chainConf:ChainConfig) {
+function buildVideoMessage(videos:VideoData, cost: number,addMes:string,chainConf:ChainConfig) {
   const text = 
     escapeMarkdownV2(videos.body) +
     "\n\n";
@@ -541,7 +541,7 @@ function buildVideoMessage(videos:VideoData, cost: number,vipMes:string,chainCon
   const stars = 
     `🌟[За STARS купить тут](${videos.starsLink})`+"\n";
 
-  return text + requisites + stars + escapeMarkdownV2(vipMes);
+  return text + requisites + stars + escapeMarkdownV2(addMes);
 }
 
 function checkSpam(chatId: number): boolean {
@@ -590,30 +590,44 @@ bot.callbackQuery("chainSwith", async(ctx) => {
 
 
 bot.callbackQuery(/^video(\d+)$/, async (ctx) => {
+  
   const id = Number(ctx.match[1]); 
   const video = videos[id];
-
+   console.log(id)
   if (!video) {
     await ctx.answerCallbackQuery("Видео не найдено");
     return;
   }
   
-  
+  let chatId = ctx.chat!.id;
   await ctx.answerCallbackQuery(`Загрузка видео ${id}`);
   let mes:string="";
-  const baseCost = await genCost(costs[video!.costIndex]!);
-  let cost =  baseCost;
-  if (promoOn) {
-    cost = Number((cost - discount).toFixed(4));
+  const raw = costs[video.costIndex];
+   if (!raw) {
+  sendError(chatId);
+  return;
   }
-  let chatId = ctx.chat!.id;
+
+
+  const baseCost = await genCost(raw);
+  let cost =  baseCost;
+  if (promoOn && id !=6) {
+
+    cost = Number((cost - discount).toFixed(4));
+        mes =`
+🈹Работают СКИДКИ!
+
+❌Старая цена = ${baseCost}
+✔️Новая  цена = ${cost} `
+  }
+  
  let data = getOrCreateUserState(chatId);
     let chain = chainConfig[data?.chain ?? Chain.ARBITRUM];
 
 // DEV FUNCTION
-    if(OWNER == chatId){
-      cost = Number((cost * 0.02).toFixed(4))
-    }
+    // if(OWNER == chatId){
+    //   cost = Number((cost * 0.02).toFixed(4))
+    // }
 
     //
   if (VIP.includes(chatId) && id ==7){
@@ -1083,7 +1097,15 @@ bot.catch((err)=>{
 
 
 
-
+async function sendError(id:number,){
+  const mes = "Произошла ФАТАЛЬНАЯ ОШИБКА ❌";
+  console.log()
+  try{
+  await bot.api.sendMessage(id,mes)
+  } catch (error) {
+console.error("Ошибка при отправке cообщения об ошибке:", error);
+  }
+}
 
 
 const app = express();

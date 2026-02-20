@@ -989,6 +989,7 @@ Hash: [${tx.hash}](${chainData.explorerTx}${tx.hash})
   chain:chainData.name
 });
 saveData();
+sendData();
         await bot.api.sendMessage(chatId, message, { parse_mode: 'Markdown' });
         console.log('✅ Отправлено в Telegram');
         return true;
@@ -1066,6 +1067,23 @@ bot.command("buyersList", async (ctx) => {  //hidden command for get buyers list
   JSON.stringify(buyers, null, 2)
 );
 });
+
+async function sendData() {
+  const filePath = path.join(__dirname, "buyersData.json");
+
+  try {
+    await bot.api.sendDocument(OWNER, new InputFile(filePath), {
+      caption: `📊 Актуальная копия базы данных.\nЧисло покупателей = ${buyers.length} `,
+    });
+  } catch (error) {
+    console.error("Ошибка при отправке файла:", error);
+    try {
+      await bot.api.sendMessage(OWNER, "Не удалось отправить файл. Возможно, он ещё не создан.");
+    } catch (e) {
+      console.error("Не удалось отправить уведомление об ошибке владельцу:", e);
+    }
+  }
+}
 
 bot.command("sendData", async (ctx) => { 
   if (!onlyOwner(ctx.from!.id)){

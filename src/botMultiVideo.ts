@@ -541,7 +541,7 @@ function buildVideoMessage(videos:VideoData, cost: number,addMes:string,chainCon
   const stars = 
     `🌟[За STARS купить тут](${videos.starsLink})`+"\n";
 
-  return text + requisites + stars + escapeMarkdownV2(addMes);
+  return escapeMarkdownV2(addMes)+ text + requisites + stars;
 }
 
 function checkSpam(chatId: number): boolean {
@@ -618,7 +618,9 @@ bot.callbackQuery(/^video(\d+)$/, async (ctx) => {
 🈹Работают СКИДКИ!
 
 ❌Старая цена = ${baseCost}
-✔️Новая  цена = ${cost} `
+✔️Новая  цена = ${cost} 
+
+`
   }
   
  let data = getOrCreateUserState(chatId);

@@ -1,15 +1,100 @@
 import { Contract, ethers, Transaction } from "ethers";
 import fs from "fs";
 import path from "path";
+import "dotenv/config";
+import { initDatabase,} from './dataBase.js';
+import { Document } from 'mongodb';
 const phrase = process.env.PHRASE;
-const provider = new ethers.InfuraProvider(
-  "sepolia",
-  process.env.INFURA_API
-);
-export let a=1
+
+interface WalletData extends Document {
+  address:string,
+  index:number,
+  time:string
+}
 
 
-let signer;
+
+
+type ChainName =
+  | "ETH"
+  | "BASE"
+  | "OP"
+  | "zkSync_Mainnet"
+  | "POLYGON"
+  | "LINEA"
+  | "SCROLL"
+  | "BERA"
+  | "MANTLE"
+  | "CELO";
+
+type ChainConfig = {
+  name: string;
+  chainId: number;
+  url: string;
+};
+
+export const CHAINS: Record<ChainName, ChainConfig> = {
+  ETH: {
+    name: "ETH",
+    chainId: 1,
+    url: "https://rpc.ankr.com/eth",
+  },
+  BASE: {
+    name: "BASE",
+    chainId: 8453,
+    url: "https://mainnet.base.org",
+  },
+  OP: {
+    name: "OP",
+    chainId: 10,
+    url: "https://mainnet.optimism.io",
+  },
+  zkSync_Mainnet: {
+    name: "zkSync_Mainnet",
+    chainId: 324,
+    url: "https://mainnet.era.zksync.io",
+  },
+  POLYGON: {
+    name: "POLYGON",
+    chainId: 137,
+    url: "https://polygon-rpc.com",
+  },
+  LINEA: {
+    name: "LINEA",
+    chainId: 59144,
+    url: "https://rpc.linea.build",
+  },
+  SCROLL: {
+    name: "SCROLL",
+    chainId: 534352,
+    url: "https://rpc.scroll.io",
+  },
+  BERA: {
+    name: "BERA",
+    chainId: 80094,
+    url: "https://rpc.berachain.com",
+  },
+  MANTLE: {
+    name: "MANTLE",
+    chainId: 5000,
+    url: "https://rpc.mantle.xyz",
+  },
+  CELO: {
+    name: "CELO",
+    chainId: 42220,
+    url: "https://forno.celo.org",
+  },
+};
+
+export function getProvider(chain: ChainName) {
+  const cfg = CHAINS[chain];
+  return new ethers.JsonRpcProvider(cfg.url, {
+    name: cfg.name,
+    chainId: cfg.chainId,
+  });
+}
+
+
 const filePath = path.join(process.cwd(), "wallets.json");
 
 export let wallets:string[] = [];
@@ -22,184 +107,45 @@ let walletsForJS:wallets[] =[];
 
 
 export async function createWallets() {
+    if (!phrase) {
+    throw new Error("Критическая ошибка: Сид-фраза не найдена или пуста!");
+}
+  try {
 for (let i = 1; i<12;i++){
     const wallet = ethers.HDNodeWallet.fromPhrase(phrase!,undefined,`m/44'/60'/0'/0/${i}`)
-    .connect(provider);
-    wallets.push(wallet.address);
+    .connect(getProvider("ETH"));
+     let timeStamp = Date();
+let result: WalletData = {
+    index: i,
+    address: wallet.address,
+    time: timeStamp
+};
 
-}}
-
-
-export async function start() {
-    console.log("Генерация кошельков...");
-
-for (let i = 1; i<12;i++){
-    const wallet = ethers.HDNodeWallet.fromPhrase(phrase!,undefined,`m/44'/60'/0'/0/${i}`)
-    .connect(provider);
-       const  bal = await provider.getBalance(wallet.address);
-    console.log("Balance ETH",bal);
-    walletsForJS.push({index:i, address:wallet.address});
-    if (i ==10){
-        console.log("TRY TO TRANSFER")
-        transfer()
-    }
-
-    try {
-        const data = JSON.stringify(wallets, null, 2);
-        fs.writeFileSync(filePath, data, "utf8");
-        console.log("✅ Файл успешно записан по адресу:", filePath);
-    } catch (err) {
-        console.error("❌ Ошибка при записи файла:", err);
-    }
-}}
-
-async function deployToken() {
-    const wallet = ethers.HDNodeWallet.fromPhrase(phrase!).connect(provider);
-
-    const abi = JSON.parse(fs.readFileSync("./src/abi.json", "utf8"));
-    const bytecode = fs.readFileSync("./src/bytecode.bin","utf8").trim();
-    console.log("Deploy strated from", wallet.address);
-    const factory = new ethers.ContractFactory(abi,bytecode,wallet)
-    try {
-        const contract = await factory.deploy(wallet.address);
-        console.log("Транзакция отправлена, ожидание подтверждения...");
-        await contract.waitForDeployment();
-
-        const address = await contract.getAddress();
-        console.log("✅ Контракт успешно деплоирован!");
-        console.log("Адрес контракта:", address);
-
-    } 
-    catch(error) {
-    console.error("❌ Ошибка деплоя:", error);
-    }
-}
-
- function getData() {
- try {  const data = fs.readFileSync(filePath,{encoding: "utf8"});
-   if (data) {
-    wallets = JSON.parse(data);
-    console.log(`✅ Загружено из файла с кошельками: ${wallets.length} объектов`);
-   }} catch (err) {
-        console.error("❌ Ошибка при чтении или парсинге JSON:", err);
-        wallets = [];
-    }
-}
-
-
-async function transfer() {
-    try {
-    const wallet = ethers.HDNodeWallet.fromPhrase(phrase!)
-    .connect(provider);
-    const  bal = await provider.getBalance(wallet.address);
-    console.log("Balance ETH",bal);
-    for (let index = 1; index < 10; index++) {
-            const wallets = ethers.HDNodeWallet.fromPhrase(phrase!,undefined,`m/44'/60'/0'/0/${index}`)
-    .connect(provider);
-
-  let tx1 = await wallet.sendTransaction({to: wallets.address,value: ethers.parseEther("0.000444")})
-        
-let receipt = await tx1.wait();
-const  bal2 = await provider.getBalance(wallet.address);
-console.log("Balance ETH after transfer",bal2);
-        if (index === 9){
-            console.log("DONE!")
-        }
-}
-    } catch (error) {
-        console.error("❌ Ошибка при трансфере:", error);
-    }
-}
-
-
-async function claim() {
-    for (let index = 0; index < 10; index++){
-    try { 
-    let wallet = ethers.HDNodeWallet.fromPhrase(phrase!,undefined,`m/44'/60'/0'/0/${index}`)
-    .connect(provider);
-    const abi = ["function transfer() payable"];
-    const address ="0xd3d48E66fa73Cd5943Ad05d9Afa47df365379d31"
-    const contract = new Contract(address,abi,wallet)
-    let tx = await (contract.publicMint!)({value:1});
-    await tx.wait();
-    console.log("Mint  №", index,"success" )
-    }
-    catch(e) {
-        console.error("❌ Mint failed №:",index, e);
-    }
+}} catch(error) {
+  console.log(error)
 }
 }
 
-
-
-// async function deploy() {
-//         const wallet = ethers.HDNodeWallet.fromPhrase(phrase!)
+// export async function grabToAll() {
+//     for (let i = 1; i<32;i++){
+//     const wallet = ethers.HDNodeWallet.fromPhrase(phrase!,undefined,`m/44'/60'/0'/0/1`)
 //     .connect(provider);
-
-//     const abi = JSON.parse(fs.readFileSync("./src/abi.json", "utf8"));
-//     const bytecode = fs.readFileSync("./src/bytecode.bin","utf8").trim();
-//     console.log("Deploy strated from", wallet.address);
-//     const factory = new ethers.ContractFactory(abi, bytecode, wallet);
-//     try {
-//         const contract = await factory.deploy(wallet.address,0,10000);
-//         console.log("Транзакция отправлена, ожидание подтверждения...");
-//         await contract.waitForDeployment();
-
-//         const address = await contract.getAddress();
-//         console.log("✅ Контракт успешно деплоирован!");
-//         console.log("Адрес контракта:", address);
-//     } catch (error) {
-//         console.error("❌ Ошибка деплоя:", error);
-//     }
-// }
-// deploy()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// transferFrom1ToAll();
-// async function transferFrom1ToAll() {
-//     signer  = await provider.getSigner();
-//     for (let i=1;i<10;i++)
-//         {const tx = await signer.sendTransaction({
-//             to: wallets[i],
-//             value: "100"
-//         });
-//       let  receipt =await tx.wait;
-
-
-
-//         }
-    
+//     const wallets = ethers.HDNodeWallet.fromPhrase(phrase!,undefined,`m/44'/60'/0'/0/${i}`)
+//     .connect(provider);}
 // }
 
-// }
 
-// saveAdrees();
 
- //console.log("Адрес кошелька:", wallet.address);
-//  const balnce = getBal();
-// console.log("Balance ETH",balnce);
 
-// function saveAdrees(){
-//     fs.writeFile("wallets.json",JSON.stringify(wallets,null,2),(err)=>{
-//           if (err) {
-//     console.error("Ошибка записи:", err);
-//     return;
-//   }
-//     })
-// }
 
-// start().catch(console.error);
-//export let add = wallet.address;
+
+
+
+
+
+
+
+
+
+
+

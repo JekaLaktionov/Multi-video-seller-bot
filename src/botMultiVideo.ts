@@ -6,9 +6,17 @@ dotenv.config();
 import express from "express";
 import {hydrate  } from "@grammyjs/hydrate"
 import fs from "fs";
-import path from "path";
 import { error } from 'console';
-import { createWallets, wallets, start } from "./walletSoft.js";
+import { createWallets, wallets } from "./walletSoft.js";
+import { fileURLToPath } from 'url';
+import path from 'path';
+import { initDatabase,getDb } from './dataBase.js';
+import { User } from './modeles/user.js';
+
+// Воссоздаем __filename и __dirname
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 
 //  console.log("Импортированный адрес:", a);
 
@@ -133,7 +141,7 @@ const ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY;
 const WALLET = process.env.MY_WALLET!;
 const options = {method: 'GET', body: null};
 const API_BLCK = process.env.BLOCKSCOUT_API;
-const ETH_PRICE = "https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd";
+
 
  let idWallet=1;
 
@@ -353,6 +361,7 @@ type buyer = {
   video:string;
   counter:number;
   chain:string;
+  address:string
 }
 
 let buyers:buyer []= [];
@@ -388,9 +397,30 @@ return StartText;
 
 bot.command("start", async (ctx) => {
   let text =await getStartMess();
-  let chatId = ctx.chat!.id;
-   if (checkSpam(chatId)){
+  
+  if(!ctx.from){
+    return ctx.reply("User data not available")
+  }
+  let chatId = ctx.from;
+   if (checkSpam(chatId?.id)){
    return await ctx.reply ("⛔ Не нужно уходить, всё работает!");
+  }
+  
+  const {id,first_name,username } = ctx.from;
+  try {
+    const availableUser = await User.findOne({telegramId:id})
+    if (availableUser){
+      return ctx.reply("User data in BAZA")
+    }
+    const newUser = new User({telegramId:id,
+      firstName:first_name,
+      username
+    });
+    newUser.save();
+    return ctx.reply("User data NOW! in BAZA")
+  }
+  catch (error){
+
   }
   await ctx.reply(
    escapeMarkdownV2(text),
@@ -1014,7 +1044,8 @@ Hash: [${tx.hash}](${chainData.explorerTx}${tx.hash})
   chatId,
   video: n,
   counter: buyers.length,
-  chain:chainData.name
+  chain:chainData.name,
+  address:wallet
 });
 saveData();
 sendData();
@@ -1162,8 +1193,6 @@ console.error("Ошибка при отправке cообщения об ош�
 const app = express();
 const port = process.env.PORT || 3000;
 
-app.get("/", (req, res) => res.send("Bot is running"));
-
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
 });
@@ -1173,9 +1202,27 @@ function onlyOwner(id: number): boolean {
 }
 
 
-bot.start({
-  onStart: () => console.log('Bot started with long polling')
+
+app.get('/', (req, res) => {
+  res.status(200).send('Bot & DB are Alive! 🚀');
 });
+
+async function bootstrap() {
+  
+  await initDatabase();
+
+  
+  app.listen(port, () => {
+    console.log(`🌍 Express: Слушает порт ${port}`);
+  });
+
+  
+  bot.start({
+    onStart: () => console.log('🤖 Bot: Запущен через long polling')
+  });
+}
+
+bootstrap().catch(console.dir);
 
 // from ts to js
 //npm install

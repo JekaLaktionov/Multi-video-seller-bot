@@ -558,7 +558,7 @@ if (!data.wallet) {
 
 
 
-function buildVideoMessage(videos:VideoData, cost: number,vipMes:string,chainConf:ChainConfig,wallet:string) {
+function buildVideoMessage(videos:VideoData, cost: number,addMes:string,chainConf:ChainConfig,wallet:string) {
   const text = 
     escapeMarkdownV2(videos.body) +
     "\n\n";
@@ -571,7 +571,7 @@ function buildVideoMessage(videos:VideoData, cost: number,vipMes:string,chainCon
   const stars = 
     `🌟[За STARS купить тут](${videos.starsLink})`+"\n";
 
-  return text + requisites + stars + escapeMarkdownV2(vipMes);
+  return escapeMarkdownV2(addMes)+ text + requisites + stars;
 }
 
 function checkSpam(chatId: number): boolean {
@@ -620,6 +620,7 @@ bot.callbackQuery("chainSwith", async(ctx) => {
 
 
 bot.callbackQuery(/^video(\d+)$/, async (ctx) => {
+  
   const id = Number(ctx.match[1]); 
   
   const video = videos[id];
@@ -628,10 +629,10 @@ bot.callbackQuery(/^video(\d+)$/, async (ctx) => {
     return;
   }
   
-  
+  let chatId = ctx.chat!.id;
   await ctx.answerCallbackQuery(`Загрузка видео ${id}`);
   let mes:string="";
-    let chatId = ctx.chat!.id;
+   
   let data = getOrCreateUserState(chatId);
     const saveCost = costs[video.costIndex];
 
@@ -1016,6 +1017,7 @@ Hash: [${tx.hash}](${chainData.explorerTx}${tx.hash})
   chain:chainData.name
 });
 saveData();
+sendData();
         await bot.api.sendMessage(chatId, message, { parse_mode: 'Markdown' });
         sendData();
         console.log('✅ Отправлено в Telegram');
@@ -1095,6 +1097,23 @@ bot.command("buyersList", async (ctx) => {  //hidden command for get buyers list
 );
 });
 
+async function sendData() {
+  const filePath = path.join(__dirname, "buyersData.json");
+
+  try {
+    await bot.api.sendDocument(OWNER, new InputFile(filePath), {
+      caption: `📊 Актуальная копия базы данных.\nЧисло покупателей = ${buyers.length} `,
+    });
+  } catch (error) {
+    console.error("Ошибка при отправке файла:", error);
+    try {
+      await bot.api.sendMessage(OWNER, "Не удалось отправить файл. Возможно, он ещё не создан.");
+    } catch (e) {
+      console.error("Не удалось отправить уведомление об ошибке владельцу:", e);
+    }
+  }
+}
+
 bot.command("sendData", async (ctx) => { 
   if (!onlyOwner(ctx.from!.id)){
     return
@@ -1112,18 +1131,7 @@ bot.command("sendData", async (ctx) => {
 });
 
 
-async function sendData() {
-  const filePath = path.join(__dirname, "buyersData.json");
-    try {
-    await bot.api.sendDocument(OWNER,new InputFile(filePath),{
-      caption: `📊 Актуальная копия базы данных.
-Число покупателей = ${buyers.length} `,
-    });
-  } catch (error) {
-    console.error("Ошибка при отправке файла:", error);
-    await bot.api.sendMessage(OWNER,"Не удалось отправить файл. Возможно, он ещё не создан.");
-  }
-}
+
 
 
 bot.catch((err)=>{
@@ -1140,7 +1148,15 @@ bot.catch((err)=>{
 
 
 
-
+async function sendError(id:number,){
+  const mes = "Произошла ФАТАЛЬНАЯ ОШИБКА ❌";
+  console.log()
+  try{
+  await bot.api.sendMessage(id,mes)
+  } catch (error) {
+console.error("Ошибка при отправке cообщения об ошибке:", error);
+  }
+}
 
 
 const app = express();

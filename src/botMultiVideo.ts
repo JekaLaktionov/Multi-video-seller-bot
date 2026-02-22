@@ -5,12 +5,12 @@ import dotenv from 'dotenv';
 dotenv.config();
 import express from "express";
 import {hydrate  } from "@grammyjs/hydrate"
-import { error } from 'console';
+
 import { createWallets, wallets } from "./walletSoft.js";
-import { fileURLToPath } from 'url';
 import { initDatabase } from './dataBase.js';
 import { User } from './modeles/user.js';
 import { Ibuyer,buyer } from './modeles/buyers.js';
+import { Counter } from './modeles/counter.js';
 
 //при старте создавать юзера и давать ему кош и пушить его в бд, потом брать оттуда
 
@@ -137,7 +137,7 @@ const options = {method: 'GET', body: null};
 const API_BLCK = process.env.BLOCKSCOUT_API;
 
 
- let idWallet=1;
+
 
 enum Chain {
   ARBITRUM = "ARBITRUM",
@@ -252,8 +252,6 @@ for (const chainName of allChainNames) {
 
 chainBord.text("Назад", "back");
 
-//a
-
 
 type ChainConfig = {
   chainId: number;
@@ -319,7 +317,11 @@ function cleanupUserState(chatId: number) {
   userIntervals.delete(chatId);
   userTimeouts.delete(chatId);
   oneClickOneMove.delete(chatId);
-  userPayMap.delete(chatId);
+  const state = userPayMap.get(chatId);
+  if (state) {
+    state.cost = 1000;
+    state.videoId = [];
+  }
 }
 
 
@@ -382,6 +384,19 @@ async function getStartMess() {
 return StartText;
 }
 
+async function getNextSequence(nameCounter:string) {
+   const result = await Counter.findOneAndUpdate(
+    {name:nameCounter},
+    {$inc:{value: 1}},
+    {returnDocument: 'after',                     
+      upsert: true}
+   );
+   return result.value
+}
+
+
+
+
 bot.command("start", async (ctx) => {
   let text =await getStartMess();
   
@@ -393,17 +408,6 @@ bot.command("start", async (ctx) => {
    return await ctx.reply ("⛔ Не нужно уходить, всё работает!");
   }
   
-  const {id,first_name,username } = ctx.from;
-  try {
-  const user = await User.findOneAndUpdate(
-  { id },
-  { $setOnInsert: { id } },
-  { upsert: true, new: true }
-);
-  }
-  catch (error){
-
-  }
   await ctx.reply(
    escapeMarkdownV2(text),
     {
@@ -479,7 +483,7 @@ bot.callbackQuery("menu", async (ctx) => {
   );
 });
 
-//here 1
+
 async function getVideoText(){
   let text = `
 🎥 Вот список видео.
@@ -500,9 +504,14 @@ async function getVideoText(){
 return text
 }
 
+let idWallet:number;
 
 bot.callbackQuery("videoboards", async (ctx) => {
-    let chatId = ctx.chat!.id;
+    if(!ctx.from){
+    return ctx.reply("User data not available")
+  }
+    let {id,username,first_name} = ctx.from;
+    let chatId = id;
    if (checkSpam(chatId)){
    return await ctx.reply ("⛔ Не нужно уходить, всё работает!");
   }
@@ -511,17 +520,28 @@ bot.callbackQuery("videoboards", async (ctx) => {
   console.log("Befor",wallets.length)
   if (wallets.length ===0){
   await createWallets();
-
   }
   console.log("After",wallets.length,idWallet)
 
-
+  
   let data = getOrCreateUserState(chatId)
+//
+
 
 if (!data.wallet) {
-  data.wallet = wallets[idWallet] ?? WALLET;
-  idWallet++;
+  const userFromDB = await getUserData(chatId);
+
+  if (userFromDB) {
+
+    data.wallet = userFromDB;
+  } else {
+    
+    data.wallet = wallets[idWallet] ?? WALLET;
+   await registerUser(chatId,data.wallet,first_name||"Satoshi",username||"Nakamoto")
+    idWallet = await getNextSequence("id");
+  }
 }
+
 
    
   console.log(data.wallet, idWallet);
@@ -670,6 +690,43 @@ function getOrCreateUserState(chatId: number): UserPayState {
   return state;
 }
 
+
+async function registerUser(chatId: number, walletAddress: string, name: string, username?: string) {
+  try {
+    const newUser = await User.create({
+      telegramId: chatId,
+      wallet: walletAddress,
+      firstName: name,
+      username: username || 'н/д'
+    });
+    
+    console.log("✅ Юзер сохранен в базу:", newUser._id);
+    return newUser;
+  } catch (error: any) {
+    if (error.code === 11000) {
+      console.error("❌ Ошибка: Такой Telegram ID или кошелек уже есть в базе!");
+    } else {
+      console.error("❌ Ошибка при создании юзера:", error.message);
+    }
+  }
+}
+
+
+async function getUserData(chatId: number) {
+  try {
+    const user = await User.findOne({ telegramId: chatId });
+    if (!user) {
+      console.log("Пользователь не найден в базе");
+      return null;
+    }
+
+    console.log("Данные пользователя получены:", user.firstName);
+    return user.wallet;
+  } catch (error) {
+    console.error("Ошибка при поиске пользователя:", error);
+    throw error;
+  }
+}
 
 function getUserDefault(): UserPayState {
   console.log("Работает")

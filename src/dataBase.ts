@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import 'dotenv/config'; // Одной этой строки достаточно для загрузки .env
+import 'dotenv/config';
 
 const uri = process.env.MONGO;
 

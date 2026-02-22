@@ -14,11 +14,11 @@ const userSchema = new Schema<IUser>({
     required: [true, 'Telegram ID is required'],
     unique: true,
   },
-//     wallet: {
-//     type: String,
-//     required: [true, 'Wallet is required'],
-//     unique: true,
-//   },
+    wallet: {
+    type: String,
+    required: [true, 'Wallet is required'],
+    unique: true,
+  },
   firstName:{type: String},
   username:{type: String},
 },{timestamps:true});

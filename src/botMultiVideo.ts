@@ -5,18 +5,12 @@ import dotenv from 'dotenv';
 dotenv.config();
 import express from "express";
 import {hydrate  } from "@grammyjs/hydrate"
-import fs from "fs";
 import { error } from 'console';
 import { createWallets, wallets } from "./walletSoft.js";
 import { fileURLToPath } from 'url';
-import path from 'path';
 import { initDatabase } from './dataBase.js';
 import { User } from './modeles/user.js';
 import { Ibuyer,buyer } from './modeles/buyers.js';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
 
 //при старте создавать юзера и давать ему кош и пушить его в бд, потом брать оттуда
 
@@ -439,41 +433,6 @@ function createPayUrl(CHAIN:string,ADDRESS:string,chainEnum:Chain,wallet:string)
   }
 
 }
-
-
-const filePath = path.join(__dirname, "buyersData.json");
-
-
-
-if(fs.existsSync(filePath)){
-try {
-        const data = fs.readFileSync(filePath, { encoding: 'utf8' });
-        
-        if (data) {
-            buyers = JSON.parse(data);
-            console.log(`✅ Загружено из файла: ${buyers.length} объектов`);
-        }
-    } catch (err) {
-        console.error("❌ Ошибка при чтении или парсинге JSON:", err);
-        
-        buyers = [];
-    }
-} else {
-    console.log("ℹ️ Файл базы данных еще не создан, начинаем с чистого листа.");
-    buyers = [];
-}
-
-
-
-function saveData(){
- fs.writeFile(filePath,JSON.stringify(buyers), (err) => {
-  if (err) {
-    console.error("Ошибка записи:", err);
-    return;
-  }
-
-  console.log("Файл успешно сохранён");
-})};
 
 
   const menuboard = new InlineKeyboard()
@@ -1039,7 +998,6 @@ Hash: [${tx.hash}](${chainData.explorerTx}${tx.hash})
     });
     newBuyer.save();
         await bot.api.sendMessage(chatId, message, { parse_mode: 'Markdown' });
-        sendData();
         console.log('✅ Отправлено в Telegram');
         return true;
       }
@@ -1117,36 +1075,22 @@ bot.command("buyersList", async (ctx) => {  //hidden command for get buyers list
 );
 });
 
-async function sendData() {
-  const filePath = path.join(__dirname, "buyersData.json");
 
-  try {
-    await bot.api.sendDocument(OWNER, new InputFile(filePath), {
-      caption: `📊 Актуальная копия базы данных.\nЧисло покупателей = ${buyers.length} `,
-    });
-  } catch (error) {
-    console.error("Ошибка при отправке файла:", error);
-    try {
-      await bot.api.sendMessage(OWNER, "Не удалось отправить файл. Возможно, он ещё не создан.");
-    } catch (e) {
-      console.error("Не удалось отправить уведомление об ошибке владельцу:", e);
-    }
-  }
-}
-
-bot.command("sendData", async (ctx) => { 
+bot.command("sendData", async (ctx) => {
   if (!onlyOwner(ctx.from!.id)){
     return
   }
-  const filePath = path.join(__dirname, "buyersData.json");
   try {
-    await ctx.replyWithDocument(new InputFile(filePath),{
-      caption: `📊 Актуальная копия базы данных.
-Число покупателей = ${buyers.length} `,
+    const buyersFromDb = await buyer.find().lean();
+    const jsonString = JSON.stringify(buyersFromDb, null, 2);
+    const buffer = Buffer.from(jsonString, 'utf8');
+
+    await ctx.replyWithDocument(new InputFile(buffer, "buyersData.json"), {
+      caption: `📊 Актуальная копия базы данных.\nЧисло покупателей = ${buyersFromDb.length}`,
     });
   } catch (error) {
-    console.error("Ошибка при отправке файла:", error);
-    await ctx.reply("Не удалось отправить файл. Возможно, он ещё не создан.");
+    console.error("Ошибка при получении/отправке данных из Mongo:", error);
+    await ctx.reply("Не удалось получить данные из базы данных.");
   }
 });
 

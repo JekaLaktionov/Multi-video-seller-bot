@@ -10,15 +10,15 @@ import { error } from 'console';
 import { createWallets, wallets } from "./walletSoft.js";
 import { fileURLToPath } from 'url';
 import path from 'path';
-import { initDatabase,getDb } from './dataBase.js';
+import { initDatabase } from './dataBase.js';
 import { User } from './modeles/user.js';
+import { Ibuyer,buyer } from './modeles/buyers.js';
 
-// Воссоздаем __filename и __dirname
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 
-//  console.log("Импортированный адрес:", a);
+//при старте создавать юзера и давать ему кош и пушить его в бд, потом брать оттуда
 
 
 const OWNER = 2040246430;
@@ -237,7 +237,7 @@ const chainConfig: Record<Chain, ChainConfig> = {
   },
     [Chain.SEPOLIA]: {
     chainId: 11155111,
-    tokenAddress: '0x79D63D5D15e644A355a2D217dEf9E7393b886939',
+    tokenAddress: '0x2b896208408A0a612FecfD0d01d678bB904dd8dF',
     explorerTx: 'https://sepolia.etherscan.io/tx/',
     name: "TESTNET"
   }};
@@ -356,15 +356,8 @@ interface TokenTx {
 
 let lastTxHash:string;
 
-type buyer = {
-  chatId:number;
-  video:string;
-  counter:number;
-  chain:string;
-  address:string
-}
 
-let buyers:buyer []= [];
+let buyers:Ibuyer []= [];
 
 const timeGap:number= 400;
 
@@ -408,16 +401,11 @@ bot.command("start", async (ctx) => {
   
   const {id,first_name,username } = ctx.from;
   try {
-    const availableUser = await User.findOne({telegramId:id})
-    if (availableUser){
-      return ctx.reply("User data in BAZA")
-    }
-    const newUser = new User({telegramId:id,
-      firstName:first_name,
-      username
-    });
-    newUser.save();
-    return ctx.reply("User data NOW! in BAZA")
+  const user = await User.findOneAndUpdate(
+  { id },
+  { $setOnInsert: { id } },
+  { upsert: true, new: true }
+);
   }
   catch (error){
 
@@ -760,7 +748,7 @@ let text =`Все ролики - за один клик, хорошеe реше�
 `;
   const requvisits = `Для покупки отправьте USDT💵 в сети ${chainName}
 К ОПЛАТЕ \\\- \`${cost}\` USDT
-На адресс \\\- \`${WALLET}\``;
+На адресс \\\- \`${wallet}\``;
 
 
  niceText = escapeMarkdownV2(text) + requvisits;
@@ -1028,6 +1016,7 @@ console.log("📊 Статус ответа:", response.status, response.statusT
                 const links = urlVs
           .map((u, i) => `${i + 1}) ${u}`)
           .join("\n");
+       let amount =   Number(tx.value) / 1e6
         const message = `
 ✅ *УСПЕШНАЯ транзакция!*
 
@@ -1037,18 +1026,18 @@ ${links}
 Hash: [${tx.hash}](${chainData.explorerTx}${tx.hash})
 От: ${tx.from}
 Кому: ${tx.to}
-Сумма: ${Number(tx.value) / 1e6} ${tx.tokenSymbol}
+Сумма: ${amount} ${tx.tokenSymbol}
 Время: ${tx.timeStamp};
         `;
-  buyers.push({
-  chatId,
-  video: n,
-  counter: buyers.length,
-  chain:chainData.name,
-  address:wallet
-});
-saveData();
-sendData();
+            const newBuyer = new buyer({chatId,
+      video: n,
+      counter: buyers.length,
+      chain:chainData.name,
+      address:wallet,
+      txHash:tx.hash,
+  amount
+    });
+    newBuyer.save();
         await bot.api.sendMessage(chatId, message, { parse_mode: 'Markdown' });
         sendData();
         console.log('✅ Отправлено в Telegram');

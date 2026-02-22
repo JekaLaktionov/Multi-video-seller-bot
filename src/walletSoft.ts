@@ -3,7 +3,7 @@ import fs from "fs";
 import path from "path";
 import "dotenv/config";
 import { initDatabase,} from './dataBase.js';
-import { Document } from 'mongodb';
+import {Document} from 'mongoose';
 const phrase = process.env.PHRASE;
 
 interface WalletData extends Document {
@@ -115,11 +115,7 @@ for (let i = 1; i<12;i++){
     const wallet = ethers.HDNodeWallet.fromPhrase(phrase!,undefined,`m/44'/60'/0'/0/${i}`)
     .connect(getProvider("ETH"));
      let timeStamp = Date();
-let result: WalletData = {
-    index: i,
-    address: wallet.address,
-    time: timeStamp
-};
+ wallets.push(  wallet.address);
 
 }} catch(error) {
   console.log(error)

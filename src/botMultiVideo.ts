@@ -273,12 +273,12 @@ bot.use(hydrate()as any);
 
 
 // costs
-const costs = Array.from({ length: 10 }, (_, i) =>
+const costs = Array.from({ length: 20 }, (_, i) =>
   Number(process.env[`PRICE${i}`] ?? 0)
 );
 
 
-const urlArr = Array.from({ length: 10 }, (_, i) =>
+const urlArr = Array.from({ length: 20 }, (_, i) =>
   (process.env[`SELLIG_VIDEO${i}`])
 );
 
@@ -504,7 +504,7 @@ async function getVideoText(){
 return text
 }
 
-let idWallet:number;
+
 
 bot.callbackQuery("videoboards", async (ctx) => {
     if(!ctx.from){
@@ -521,7 +521,7 @@ bot.callbackQuery("videoboards", async (ctx) => {
   if (wallets.length ===0){
   await createWallets();
   }
-  console.log("After",wallets.length,idWallet)
+  console.log("After",wallets.length)
 
   
   let data = getOrCreateUserState(chatId)
@@ -535,16 +535,17 @@ if (!data.wallet) {
 
     data.wallet = userFromDB;
   } else {
-    
-    data.wallet = wallets[idWallet] ?? WALLET;
+    const seq = await getNextSequence("id");
+    const idx = (seq - 1) % Math.max(1, wallets.length);
+    data.wallet = wallets[idx] ?? WALLET;
    await registerUser(chatId,data.wallet,first_name||"Satoshi",username||"Nakamoto")
-    idWallet = await getNextSequence("id");
+    console.log(data.wallet, idx);
   }
 }
 
 
    
-  console.log(data.wallet, idWallet);
+  
   await ctx.editMessageText(escapeMarkdownV2(text),
     {
       parse_mode: "MarkdownV2",
@@ -1047,13 +1048,14 @@ Hash: [${tx.hash}](${chainData.explorerTx}${tx.hash})
         `;
             const newBuyer = new buyer({chatId,
       video: n,
-      counter: buyers.length,
+      counter: await buyer.countDocuments(),
       chain:chainData.name,
       address:wallet,
       txHash:tx.hash,
   amount
     });
-    newBuyer.save();
+    await newBuyer.save();
+    
         await bot.api.sendMessage(chatId, message, { parse_mode: 'Markdown' });
         console.log('✅ Отправлено в Telegram');
         return true;
@@ -1183,9 +1185,6 @@ console.error("Ошибка при отправке cообщения об ош�
 const app = express();
 const port = process.env.PORT || 3000;
 
-app.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
-});
 
 function onlyOwner(id: number): boolean {
   return id === OWNER;

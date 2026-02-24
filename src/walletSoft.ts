@@ -1,19 +1,8 @@
 import { Contract, ethers, Transaction } from "ethers";
-import fs from "fs";
-import path from "path";
 import "dotenv/config";
 import { initDatabase,} from './dataBase.js';
 import {Document} from 'mongoose';
 const phrase = process.env.PHRASE;
-
-interface WalletData extends Document {
-  address:string,
-  index:number,
-  time:string
-}
-
-
-
 
 type ChainName =
   | "ETH"
@@ -95,10 +84,10 @@ export function getProvider(chain: ChainName) {
 }
 
 
-const filePath = path.join(process.cwd(), "wallets.json");
+
 
 export let wallets:string[] = [];
-let walletsForJS:wallets[] =[];
+
 
  interface wallets {
     index:number;
@@ -111,10 +100,9 @@ export async function createWallets() {
     throw new Error("Критическая ошибка: Сид-фраза не найдена или пуста!");
 }
   try {
-for (let i = 1; i<12;i++){
+for (let i = 1; i<32;i++){
     const wallet = ethers.HDNodeWallet.fromPhrase(phrase!,undefined,`m/44'/60'/0'/0/${i}`)
     .connect(getProvider("ETH"));
-     let timeStamp = Date();
  wallets.push(  wallet.address);
 
 }} catch(error) {

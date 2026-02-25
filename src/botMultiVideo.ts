@@ -749,7 +749,7 @@ bot.callbackQuery("videoAll", async (ctx)=>{
   }
  await ctx.answerCallbackQuery("Загрузка всех видео");
 
-let cost =await genCost(sumCosts);
+let cost = Math.ceil(sumCosts);
 console.log(costs)
 const sumCostsOld =   costs
     .filter(Number.isFinite)

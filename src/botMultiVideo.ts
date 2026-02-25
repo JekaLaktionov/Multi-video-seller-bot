@@ -12,7 +12,7 @@ import { User } from './modeles/user.js';
 import { Ibuyer,buyer } from './modeles/buyers.js';
 import { Counter } from './modeles/counter.js';
 
-//при старте создавать юзера и давать ему кош и пушить его в бд, потом брать оттуда
+
 
 
 const OWNER = 2040246430;

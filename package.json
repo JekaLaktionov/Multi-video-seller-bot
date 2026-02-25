@@ -13,7 +13,6 @@
   "license": "ISC",
   "dependencies": {
     "@grammyjs/hydrate": "^1.6.0",
-    "build": "^0.1.4",
     "dotenv": "^17.2.3",
     "ethers": "^6.16.0",
     "express": "^5.1.0",
@@ -21,8 +20,6 @@
     "mongoose": "^9.2.1",
     "node-fetch": "^3.3.2",
     "nodemon": "^3.1.10",
-    "npm": "^11.9.0",
-    "run": "^1.5.0",
     "typescript": "^5.9.3"
   },
   "devDependencies": {

@@ -307,7 +307,7 @@ const userTimeouts = new Map<number, NodeJS.Timeout>();
 const userPayMap = new Map<number,UserPayState >();
 
 // Cleanup user state function
-function cleanupUserState(chatId: number) {
+function cleanupUserState(chatId: number,saveCost = 1000,defVideoID:string[] =[]) {
   const intervalId = userIntervals.get(chatId);
   if (intervalId) clearInterval(intervalId);
   
@@ -317,17 +317,18 @@ function cleanupUserState(chatId: number) {
   userIntervals.delete(chatId);
   userTimeouts.delete(chatId);
   oneClickOneMove.delete(chatId);
+  console.log("КЛЮЧ УДАЛЁН",console.log(oneClickOneMove.get(chatId)))
   const state = userPayMap.get(chatId);
   if (state) {
-    state.cost = 1000;
-    state.videoId = [];
+    state.cost = saveCost;
+    state.videoUrl = defVideoID;
   }
 }
 
 
 type UserPayState = {
   cost: number;
-  videoId: string[];
+  videoUrl: string[];
   chain: Chain;
   wallet:string;
 };
@@ -355,7 +356,11 @@ let lastTxHash:string;
 
 let buyers:Ibuyer []= [];
 
-const timeGap:number= 400;
+
+const SECOND = 1;
+const MINUTE = 60 * SECOND;
+const HOUR   = 60 * MINUTE;
+const timeGap = 12 * HOUR;
 
 bot.api.setMyCommands([
     {
@@ -668,7 +673,7 @@ bot.callbackQuery(/^video(\d+)$/, async (ctx) => {
   }
   const text = buildVideoMessage(video!, cost,mes,chain,userWallet);
   data.cost = cost;
-  data.videoId = [id.toString()];
+  data.videoUrl = [id.toString()];
   
   const inlineKeyboard = new InlineKeyboard()
     .text(`Оплачено`, `pay:`).row()
@@ -733,7 +738,7 @@ function getUserDefault(): UserPayState {
   console.log("Работает")
   return {
     cost: 1000,
-    videoId:[],
+    videoUrl:[],
     chain: Chain.ARBITRUM,
     wallet:""
   };
@@ -771,7 +776,7 @@ let text =`Все ролики - за один клик, хорошеe реше�
  niceText = escapeMarkdownV2(text) + requvisits;
   let idVideo = 999;
   
-  userPayMap.set(chatId,{cost,videoId:[idVideo.toString()],chain,wallet});
+  userPayMap.set(chatId,{cost,videoUrl:[idVideo.toString()],chain,wallet});
   const inlineVideo = new InlineKeyboard()  
   .text(`Оплачено - ${cost}`,`pay:`).row()
   .text(`Назад к списку`,"ToVideo").row()
@@ -839,6 +844,7 @@ bot.callbackQuery("ToVideo", async (ctx) => {
      if (checkSpam(chatId!)){
    return await ctx.reply ("⛔ Не нужно уходить, дождитесь конца проверки!");
   }
+
   await ctx.answerCallbackQuery("Возврашаемся назад");
   let text =await getVideoText();
   await ctx.editMessageText(
@@ -903,24 +909,32 @@ bot.command("token", async (ctx) => {
 bot.on("callback_query:data", async (ctx) =>{
   let chatId = ctx.chat!.id;
   let n:string;
-  if (oneClickOneMove.get(chatId) == true){
+  if (oneClickOneMove.has(chatId)){
     console.log("АНТИСПАМ");
     console.log(userPayMap.get(chatId)?.cost)
    return await ctx.reply ("⛔ Не нужно спамить, всё работает!");
    
   } 
     //normal logic
-
+console.log("normal logic");
     const callback = ctx.callbackQuery.data
     if (callback.startsWith("pay:")) {
-    let data = userPayMap.get(chatId);
-    let urls:string[]|undefined = data?.videoId;
-      oneClickOneMove.set(chatId,true);
 
-    
-    
-    if (data === undefined ||urls === undefined || urls.length === 0 || urls[0] === undefined) {
-    return new Error("Error in urls: array is undefined or empty.");
+      const data = userPayMap.get(chatId);
+  if (!data) {
+    console.log("Error: data is undefined");
+    return;
+  }
+    let urls:string[]|undefined =[...data?.videoUrl];
+      
+      
+      console.log(oneClickOneMove.get(chatId))
+      console.log("DEBUG data:", data);
+      console.log("DEBUG urls:", urls, typeof urls);
+
+
+    if (urls === undefined || urls.length === 0 || urls[0] === undefined) {
+    return console.log("Error in urls: array is undefined or empty.");
 }
     if (urls[0] == "999") {
        urls = Allurl
@@ -930,16 +944,17 @@ bot.on("callback_query:data", async (ctx) =>{
      const newUrl: string | undefined = urlArr[index]; 
 
 if (newUrl === undefined) {
-    return new Error("Error: Selected video URL is not defined in environment variables.");
+    return console.log("Error: Selected video URL is not defined in environment variables.");
 }
     urls[0] = newUrl;
     }
-        // Теперь очищаем только интервалы, но НЕ userPayMap
-    const oldInt = userIntervals.get(chatId);
-    if (oldInt) clearInterval(oldInt);
-    const oldTimeout = userTimeouts.get(chatId);
-    if (oldTimeout) clearTimeout(oldTimeout);
+    oneClickOneMove.set(chatId,true);    
+// ♻️ Очистка старых таймеров
+  userIntervals.get(chatId) && clearInterval(userIntervals.get(chatId)!);
+  userTimeouts.get(chatId) && clearTimeout(userTimeouts.get(chatId)!);
+
     console.log("♻️ Старый интервал очищен");
+
     let cost = data?.cost;
     let chain = data?.chain;
 
@@ -969,7 +984,7 @@ userIntervals.set(chatId, intervalId);
   } catch (err) {
     console.error('❌ Ошибка при отправке сообщения:', err);
   }
-  cleanupUserState(chatId);
+  cleanupUserState(chatId,cost,data?.videoUrl);
   console.log('⏹ Мониторинг остановлен timeout.');
 }, 4 * 60 * 1000);
 userTimeouts.set(chatId, timeoutId);

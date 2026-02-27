@@ -331,6 +331,7 @@ type UserPayState = {
   videoUrl: string[];
   chain: Chain;
   wallet:string;
+  menuId?:number
 };
 
 
@@ -408,20 +409,36 @@ bot.command("start", async (ctx) => {
   if(!ctx.from){
     return ctx.reply("User data not available")
   }
-  let chatId = ctx.from;
-   if (checkSpam(chatId?.id)){
+  let chatId = ctx.from.id;
+   if (checkSpam(chatId)){
    return await ctx.reply ("⛔ Не нужно уходить, всё работает!");
   }
-  
-  await ctx.reply(
+    const data = getOrCreateUserState(chatId);
+    
+  if (ctx.message) {
+    await ctx.api.deleteMessage(
+      chatId,
+      ctx.message.message_id
+    );
+  }
+
+  if (data.menuId) {
+    try {
+      await bot.api.deleteMessage(chatId, data.menuId);
+    } catch (e) {
+      console.log("Cant delete menu");
+    }
+  }
+  const mess = await ctx.reply(
    escapeMarkdownV2(text),
     {
       parse_mode: "MarkdownV2",
       reply_markup: menuboard
     }
   );
-});
 
+ if(mess){ data.menuId = mess.message_id}
+});
 
 
 

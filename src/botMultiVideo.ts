@@ -250,7 +250,7 @@ for (const chainName of allChainNames) {
   chainBord.text(chainName, `chain_${chainName}`).row();
 }
 
-chainBord.text("Назад", "back");
+chainBord.text(`Какие токены принимает бот?`,`token`).row().text("Назад", "back");
 
 
 type ChainConfig = {
@@ -364,16 +364,9 @@ const HOUR   = 60 * MINUTE;
 const timeGap = 12 * HOUR;
 
 bot.api.setMyCommands([
-    {
-      command: "token", description: "Смарт контракт токена для оплаты" 
-  },
   {
     command: "start", description: "Запуск бота" 
   },
-  {
-      command: "token", description: "Смарт контракты токенов для оплаты (ЧЕМ ПЛАТИТЬ)" 
-  },
-
 ])
 
 async function getStartMess() {
@@ -466,6 +459,7 @@ function createPayUrl(CHAIN:string,ADDRESS:string,chainEnum:Chain,wallet:string)
   .text("Закрытая видеобиблиотека", "videoboards").row()
   .text(`Консультации по криптовалюте`,"cons").row()
   .text(`Смена блокчейна для оплаты`,`chainSwith`).row();
+  
 
   const videoboard = new InlineKeyboard()
     for (const [index,cost] of costs.entries()){
@@ -854,7 +848,25 @@ bot.callbackQuery("back", async (ctx) => {
   );
 });
 
+bot.callbackQuery("backToChains", async (ctx) => {
+  let chatId = ctx.chat!.id; 
+   if (checkSpam(chatId)){
+   return await ctx.reply ("⛔ Не нужно уходить, всё работает!");
+  }
+    let data = getOrCreateUserState(chatId);
+ let chain = chainConfig[data.chain ?? Chain.ARBITRUM];
+  await ctx.answerCallbackQuery("Возврашаемся назад");
+    let text =`✅ Текущая сеть: **${chain.name}**
 
+🔗 Контракт USDT: ${chain.tokenAddress}`;
+  await ctx.editMessageText(
+   escapeMarkdownV2(text),
+    {
+      parse_mode: "MarkdownV2",
+      reply_markup: chainBord
+    }
+  );
+});
 
 bot.callbackQuery("ToVideo", async (ctx) => {
   let chatId= ctx.chat?.id;
@@ -897,7 +909,9 @@ const board = new InlineKeyboard().text("Назад","back");
 });
 
 
-bot.command("token", async (ctx) => {
+bot.callbackQuery("token", async (ctx) => {
+    ctx.answerCallbackQuery("Загружаю список токенов");
+const board = new InlineKeyboard().text("Назад","backToChains");
   let chainList = allChainNames
   .map(id =>{
     let chain = chainConfig[id];
@@ -914,10 +928,11 @@ bot.command("token", async (ctx) => {
   
   Бот принимает оплату только официальными токенами с указаных ниже смарт\\-контрактов\\:
   ${chainList}` 
-  await ctx.reply(
+  await ctx.editMessageText(
     (mes),
     {
-      parse_mode: "MarkdownV2"
+      parse_mode: "MarkdownV2",
+      reply_markup: board
     }
   );
 });

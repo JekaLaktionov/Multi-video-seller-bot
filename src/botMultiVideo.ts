@@ -157,7 +157,7 @@ enum Chain {
 
 
 
-const chainConfig: Record<Chain, ChainConfig> = {
+export const chainConfig: Record<Chain, ChainConfig> = {
   [Chain.ARBITRUM]: {
     chainId: 42161,
     tokenAddress: '0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9',

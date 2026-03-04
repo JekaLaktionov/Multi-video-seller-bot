@@ -155,11 +155,13 @@ async function grabFromWallets(chain: Chain,walletsToWithdraw:string[]) {
   const provider = getProvider(chain);
   const tokenAddress = CHAINS[chain].tokenAddress;
   for (let i = 0; i< wallets.length;i++){
-  // wallets.
-  const mainWallet = ethers.HDNodeWallet.fromPhrase(phrase!,undefined,`m/44'/60'/0'/0/${i}`)
-    .connect(getProvider(Chain.ARBITRUM));
+   let curWallet = walletsToWithdraw[i]
+  const result = wallets.find(w => w.address === curWallet);
+  if (!result) continue;
+  let mainWallet = ethers.HDNodeWallet.fromPhrase(phrase!,undefined,`m/44'/60'/0'/0/${result.index}`)
+    .connect(provider);
 
-  const contract = new Contract(tokenAddress,abi,)
+  let contract = new Contract(tokenAddress,abi,mainWallet)
   }
 }
 

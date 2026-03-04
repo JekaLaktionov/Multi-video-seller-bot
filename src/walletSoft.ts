@@ -155,7 +155,7 @@ async function grabFromWallets(chain: Chain,walletsToWithdraw:string[]) {
   const provider = getProvider(chain);
   const tokenAddress = CHAINS[chain].tokenAddress;
   for (let i = 0; i< wallets.length;i++){
-  wallets.
+  // wallets.
   const mainWallet = ethers.HDNodeWallet.fromPhrase(phrase!,undefined,`m/44'/60'/0'/0/${i}`)
     .connect(getProvider(Chain.ARBITRUM));
 

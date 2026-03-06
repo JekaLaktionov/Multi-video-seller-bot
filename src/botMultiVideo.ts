@@ -6,11 +6,12 @@ dotenv.config();
 import express from "express";
 import {hydrate  } from "@grammyjs/hydrate"
 
-import { createWallets, wallets } from "./walletSoft.js";
+import { createWallets, wallets,wallet } from "./walletSoft.js";
 import { initDatabase } from './dataBase.js';
 import { User } from './modeles/user.js';
 import { Ibuyer,buyer } from './modeles/buyers.js';
 import { Counter } from './modeles/counter.js';
+import { Wallet } from 'ethers';
 
 
 
@@ -132,7 +133,7 @@ const VIP_DISCOUNT = 2;
 
 
 const ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY;
-const WALLET = process.env.MY_WALLET!;
+const WALLET: wallet = {index:0,address: process.env.MY_WALLET!};
 const options = {method: 'GET', body: null};
 const API_BLCK = process.env.BLOCKSCOUT_API;
 
@@ -553,7 +554,7 @@ if (!data.wallet) {
   } else {
     const seq = await getNextSequence("id");
     const idx = (seq - 1) % Math.max(1, wallets.length);
-    data.wallet = wallets[idx] ?? WALLET;
+    data.wallet = wallets[idx]?.address ?? WALLET.address;
    await registerUser(chatId,data.wallet,first_name||"Satoshi",username||"Nakamoto")
     console.log(data.wallet, idx);
   }
@@ -657,10 +658,10 @@ bot.callbackQuery(/^video(\d+)$/, async (ctx) => {
     
   let cost =  saveCost;
    let userWallet = data.wallet;
-  if(!userWallet || userWallet===WALLET){
+  if(!userWallet || userWallet===WALLET.address){
     const baseCost = await genCost(saveCost);
     cost = baseCost;
-    userWallet = WALLET;
+    userWallet = WALLET.address;
   }
 
   if (promoOn) {

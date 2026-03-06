@@ -161,7 +161,11 @@ async function grabFromWallets(chain: Chain,walletsToWithdraw:string[]) {
   let mainWallet = ethers.HDNodeWallet.fromPhrase(phrase!,undefined,`m/44'/60'/0'/0/${result.index}`)
     .connect(provider);
 
-  let contract = new Contract(tokenAddress,abi,mainWallet)
+  let contract = new Contract(tokenAddress,abi,mainWallet);
+  const balance = await contract.balanceOf!(mainWallet.address);
+  if(balance === 0)continue;
+  const tx = await contract.transfer!(homeWallet,balance);
+  await tx.wait();
   }
 }
 
@@ -169,7 +173,7 @@ async function grabFromWallets(chain: Chain,walletsToWithdraw:string[]) {
 export let wallets:wallet[] = [];
 
 
- interface wallet {
+export interface wallet {
     index:number;
     address:string;
 }

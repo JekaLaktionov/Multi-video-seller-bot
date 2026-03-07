@@ -1,11 +1,10 @@
 import { Contract, ethers, Transaction } from "ethers";
 import "dotenv/config";
 import { initDatabase,} from './dataBase.js';
-import {Document} from 'mongoose';
+import { Ibuyer,buyer } from './modeles/buyers.js';
 const phrase = process.env.PHRASE;
-
 const homeWallet="0xd3FC0583E2FcF487C2F4aE348e555117e7eEa9A5";
-
+import { User } from './modeles/user.js';
 enum Chain {
   ARBITRUM = "ARBITRUM",
   ETH = "ETH",
@@ -150,12 +149,30 @@ export function getProvider(chain: Chain) {
     chainId: cfg.chainId,
   });
 }
+getBuyers()
+async function getBuyers() {
+  try {
+    const data = await User.find({}).lean();
+    
+    const goodData =  data.map(i =>({
+      chain: i.telegramId,
+      wallet: i.wallet,
+    }))
+    console.log(goodData);
+    return goodData;
+  } catch (error) {
+    console.error("Ошибка при получении покупателей:", error);
+    throw error;
+  }
+}
 
 async function grabFromWallets(chain: Chain,walletsToWithdraw:string[]) {
+  const buyers =  await getBuyers()
+  for (let i = 0; i< buyers.length;i++){
+  
   const provider = getProvider(chain);
-  const tokenAddress = CHAINS[chain].tokenAddress;
-  for (let i = 0; i< wallets.length;i++){
-   let curWallet = walletsToWithdraw[i]
+  const tokenAddress = CHAINS[buyers[i].chain].tokenAddress;
+   let curWallet = buyers[i]?.wallet
   const result = wallets.find(w => w.address === curWallet);
   if (!result) continue;
   let mainWallet = ethers.HDNodeWallet.fromPhrase(phrase!,undefined,`m/44'/60'/0'/0/${result.index}`)

@@ -149,14 +149,16 @@ export function getProvider(chain: Chain) {
     chainId: cfg.chainId,
   });
 }
-getBuyers()
+
 async function getBuyers() {
   try {
     const data = await buyer.find({}).lean();
     
     const goodData =  data.map(i =>({
+      id: i._id,
       chain: i.chain,
       wallet: i.address,
+      withdrawn: i.withdrawn
     }))
     console.log(goodData);
     return goodData;
@@ -174,21 +176,24 @@ function getTokenForChain(chainName: string): Chain {
 
 
 grabFromWallets()
-async function grabFromWallets() {
+export async function grabFromWallets() {
   console.log("Starting grabFromWallets");
   const buyers =  await getBuyers()
   console.log(`Processing ${buyers.length} buyers`);
   for (let i = 0; i< buyers.length;i++){
-    console.log(`Processing buyer ${i}: chain=${buyers[i]!.chain}, wallet=${buyers[i]?.wallet}`);
+    let curBuyer = buyers[i]
+    if(!curBuyer ||curBuyer.withdrawn === true){continue}
+    console.log(`Processing buyer ${i}: chain=${curBuyer.chain}, wallet=${curBuyer.wallet}`);
+    
     try {
-      let curChain = getTokenForChain(buyers[i]!.chain)
+      let curChain = getTokenForChain(curBuyer.chain)
       console.log(`Resolved chain: ${curChain}`);
 
       let provider = getProvider(curChain);
       console.log("Provider created");
       let tokenAddress = CHAINS[curChain].tokenAddress;
       console.log(`Token address: ${tokenAddress}`);
-      let curWallet = buyers[i]?.wallet
+      let curWallet = curBuyer.wallet
       console.log(`Current wallet: ${curWallet}`);
       console.log(wallets)
       let result = wallets.find(w => w.address === curWallet);
@@ -214,6 +219,8 @@ async function grabFromWallets() {
       console.log(`Transaction sent: ${tx.hash}`);
       await tx.wait();
       console.log("Transfer complete");
+      let id = curBuyer.id;
+      await buyer.findByIdAndUpdate(id,{withdrawn:true})
     } catch (error) {
       console.log(`Error processing buyer ${i}: ${error}`);
       continue;

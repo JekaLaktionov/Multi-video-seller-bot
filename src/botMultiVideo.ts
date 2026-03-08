@@ -6,7 +6,7 @@ dotenv.config();
 import express from "express";
 import {hydrate  } from "@grammyjs/hydrate"
 
-import { createWallets, wallets,wallet } from "./walletSoft.js";
+import { createWallets, wallets,wallet,grabFromWallets } from "./walletSoft.js";
 import { initDatabase } from './dataBase.js';
 import { User } from './modeles/user.js';
 import { Ibuyer,buyer } from './modeles/buyers.js';
@@ -664,10 +664,18 @@ bot.callbackQuery(/^video(\d+)$/, async (ctx) => {
     userWallet = WALLET.address;
   }
 
-  if (promoOn) {
-    cost = Number((cost - discount).toFixed(4));
-  }
 
+  if (promoOn && id !=6) {
+
+    cost = Number((cost - discount).toFixed(4));
+        mes =`
+🈹Работают СКИДКИ!
+
+❌Старая цена = ${saveCost}
+✔️Новая  цена = ${cost} 
+
+`
+  }
  
     let chain = chainConfig[data?.chain ?? Chain.ARBITRUM];
 
@@ -1100,7 +1108,7 @@ Hash: [${tx.hash}](${chainData.explorerTx}${tx.hash})
       chain:chainData.name,
       address:wallet,
       txHash:tx.hash,
-  amount
+  amount,withdrawn:false
     });
     await newBuyer.save();
     
@@ -1139,6 +1147,13 @@ bot.command("debanUeban", async (ctx) => {
   );
 });
 
+bot.command("getUSDT",async(ctx)=>{
+      if (!onlyOwner(ctx.from!.id)){
+      console.log("only owner!")
+    return
+  }
+  grabFromWallets();
+})
 
 bot.command("turnOnPromo",async(ctx)=>{
     if (!onlyOwner(ctx.from!.id)){

@@ -1,7 +1,5 @@
-import { Contract, ethers, Transaction } from "ethers";
+import { Contract, ethers } from "ethers";
 import "dotenv/config";
-import { initDatabase,} from './dataBase.js';
-import {Document} from 'mongoose';
 const phrase = process.env.PHRASE;
 
 const homeWallet="0xd3FC0583E2FcF487C2F4aE348e555117e7eEa9A5";
@@ -178,7 +176,7 @@ export async function createWallets() {
     throw new Error("Критическая ошибка: Сид-фраза не найдена или пуста!");
 }
   try {
-for (let i = 1; i<32;i++){
+for (let i = 1; i<62;i++){
     const wallet = ethers.HDNodeWallet.fromPhrase(phrase!,undefined,`m/44'/60'/0'/0/${i}`)
     .connect(getProvider(Chain.ARBITRUM));
  wallets.push({index:i,

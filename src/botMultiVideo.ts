@@ -553,7 +553,7 @@ if (!data.wallet) {
   } else {
     const seq = await getNextSequence("id");
     const idx = (seq - 1) % Math.max(1, wallets.length);
-    data.wallet = wallets[idx] ?? WALLET;
+    data.wallet = wallets[idx]?.address ?? WALLET;
    await registerUser(chatId,data.wallet,first_name||"Satoshi",username||"Nakamoto")
     console.log(data.wallet, idx);
   }

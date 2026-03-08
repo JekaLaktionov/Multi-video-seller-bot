@@ -8,7 +8,7 @@ export interface Ibuyer extends Document   {
   address:string;
   txHash:string;
   amount:number;
-  withdrawed:Boolean;
+  withdrawn:Boolean;
   createdAt: Date;
 }
 
@@ -26,7 +26,7 @@ const buyersArrSchema = new Schema<Ibuyer>({
   },
   txHash:{type: String},
   amount:{type: Number},
-  withdrawed:{type:Boolean}
+  withdrawn:{type:Boolean}
 },{timestamps:true});
 
 export const buyer = model <Ibuyer>("buyersArrSchema",buyersArrSchema)

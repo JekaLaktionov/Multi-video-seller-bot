@@ -1099,7 +1099,7 @@ Hash: [${tx.hash}](${chainData.explorerTx}${tx.hash})
       chain:chainData.name,
       address:wallet,
       txHash:tx.hash,
-  amount
+  amount,withdrawn:false
     });
     await newBuyer.save();
     

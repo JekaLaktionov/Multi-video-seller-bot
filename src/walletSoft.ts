@@ -1,10 +1,10 @@
-import { Contract, ethers, Transaction } from "ethers";
-import "dotenv/config";
-import { initDatabase,} from './dataBase.js';
-import { Ibuyer,buyer } from './modeles/buyers.js';
+import { Contract, ethers } from "ethers";
+import dotenv from 'dotenv';
+dotenv.config();
+import { buyer } from './modeles/buyers.js';
 const phrase = process.env.PHRASE;
-const homeWallet="0xd3FC0583E2FcF487C2F4aE348e555117e7eEa9A5";
-import { User } from './modeles/user.js';
+
+const homeWallet="0x48fA0e205Ce2c8525e0B51dE809Df2946C6C164E";
 enum Chain {
   ARBITRUM = "ARBITRUM",
   ETH = "ETH",
@@ -17,7 +17,7 @@ enum Chain {
   BERA = "BERA",
   MANTLE = "MANTLE",
   CELO = "CELO",
-  SEPOLIA ="SEPOLIA"
+  TESTNET ="TESTNET"
 }
 
 
@@ -122,7 +122,7 @@ export const CHAINS: Record<Chain, ChainConfig> = {
     rpcUrl: "https://rpc.mantle.xyz",
   },
 
-  [Chain.SEPOLIA]: {
+  [Chain.TESTNET]: {
     name: "TESTNET",
     chainId: 11155111,
     tokenAddress: "0x2b896208408A0a612FecfD0d01d678bB904dd8dF",
@@ -152,11 +152,11 @@ export function getProvider(chain: Chain) {
 getBuyers()
 async function getBuyers() {
   try {
-    const data = await User.find({}).lean();
+    const data = await buyer.find({}).lean();
     
     const goodData =  data.map(i =>({
-      chain: i.telegramId,
-      wallet: i.wallet,
+      chain: i.chain,
+      wallet: i.address,
     }))
     console.log(goodData);
     return goodData;
@@ -166,23 +166,58 @@ async function getBuyers() {
   }
 }
 
-async function grabFromWallets(chain: Chain,walletsToWithdraw:string[]) {
-  const buyers =  await getBuyers()
-  for (let i = 0; i< buyers.length;i++){
-  
-  const provider = getProvider(chain);
-  const tokenAddress = CHAINS[buyers[i].chain].tokenAddress;
-   let curWallet = buyers[i]?.wallet
-  const result = wallets.find(w => w.address === curWallet);
-  if (!result) continue;
-  let mainWallet = ethers.HDNodeWallet.fromPhrase(phrase!,undefined,`m/44'/60'/0'/0/${result.index}`)
-    .connect(provider);
+function getTokenForChain(chainName: string): Chain {
+  const key = chainName as keyof typeof CHAINS;
+  if (!CHAINS[key]) throw new Error(`Chain ${chainName} not supported`);
+  return key;
+}
 
-  let contract = new Contract(tokenAddress,abi,mainWallet);
-  const balance = await contract.balanceOf!(mainWallet.address);
-  if(balance === 0)continue;
-  const tx = await contract.transfer!(homeWallet,balance);
-  await tx.wait();
+
+grabFromWallets()
+async function grabFromWallets() {
+  console.log("Starting grabFromWallets");
+  const buyers =  await getBuyers()
+  console.log(`Processing ${buyers.length} buyers`);
+  for (let i = 0; i< buyers.length;i++){
+    console.log(`Processing buyer ${i}: chain=${buyers[i]!.chain}, wallet=${buyers[i]?.wallet}`);
+    try {
+      let curChain = getTokenForChain(buyers[i]!.chain)
+      console.log(`Resolved chain: ${curChain}`);
+
+      let provider = getProvider(curChain);
+      console.log("Provider created");
+      let tokenAddress = CHAINS[curChain].tokenAddress;
+      console.log(`Token address: ${tokenAddress}`);
+      let curWallet = buyers[i]?.wallet
+      console.log(`Current wallet: ${curWallet}`);
+      console.log(wallets)
+      let result = wallets.find(w => w.address === curWallet);
+      if (!result) {
+        console.log(`Wallet ${curWallet} not found in wallets array`);
+        continue;
+      }
+      console.log(`Found wallet index: ${result.index}`);
+      let mainWallet = ethers.HDNodeWallet.fromPhrase(phrase!,undefined,`m/44'/60'/0'/0/${result.index}`)
+        .connect(provider);
+      console.log(`Main wallet address: ${mainWallet.address}`);
+
+      let contract = new Contract(tokenAddress,abi,mainWallet);
+      console.log("Contract created");
+      const balance = await contract.balanceOf!(mainWallet.address);
+      console.log(`Balance: ${balance}`);
+      if(balance === 0n){
+        console.log("Balance is zero, skipping");
+        continue;
+      }
+      console.log("Transferring balance...");
+      const tx = await contract.transfer!(homeWallet,balance);
+      console.log(`Transaction sent: ${tx.hash}`);
+      await tx.wait();
+      console.log("Transfer complete");
+    } catch (error) {
+      console.log(`Error processing buyer ${i}: ${error}`);
+      continue;
+    }
   }
 }
 
@@ -201,12 +236,12 @@ export async function createWallets() {
     throw new Error("Критическая ошибка: Сид-фраза не найдена или пуста!");
 }
   try {
-for (let i = 1; i<32;i++){
+for (let i = 0; i<32;i++){
     const wallet = ethers.HDNodeWallet.fromPhrase(phrase!,undefined,`m/44'/60'/0'/0/${i}`)
     .connect(getProvider(Chain.ARBITRUM));
  wallets.push({index:i,
   address: wallet.address});
-
+  console.log("from func", wallets)
 }} catch(error) {
   console.log(error)
 }

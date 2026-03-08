@@ -11,10 +11,10 @@ import { initDatabase } from './dataBase.js';
 import { User } from './modeles/user.js';
 import { Ibuyer,buyer } from './modeles/buyers.js';
 import { Counter } from './modeles/counter.js';
-import { Wallet } from 'ethers';
 
 
 
+await createWallets();
 
 const OWNER = 2040246430;
 

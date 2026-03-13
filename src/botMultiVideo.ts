@@ -948,6 +948,7 @@ const board = new InlineKeyboard().text("Назад","backToChains");
 
 
 bot.on("callback_query:data", async (ctx) =>{
+  ctx.answerCallbackQuery("Проверяем платёж");
   let chatId = ctx.chat!.id;
   let n:string;
   if (oneClickOneMove.has(chatId)){

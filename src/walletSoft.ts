@@ -1,4 +1,4 @@
-import { Contract, ethers } from "ethers";
+import { Contract, ethers, parseEther } from "ethers";
 import dotenv from 'dotenv';
 dotenv.config();
 import { buyer } from './modeles/buyers.js';
@@ -193,7 +193,15 @@ export async function grabFromWallets() {
       console.log("Provider created");
       let tokenAddress = CHAINS[curChain].tokenAddress;
       console.log(`Token address: ${tokenAddress}`);
-      let curWallet = curBuyer.wallet
+
+      let curWallet = curBuyer.wallet;
+      let balanceWei = await provider.getBalance(curWallet);
+      if(balanceWei < parseEther("0.00005")){
+      let gasWallet = ethers.HDNodeWallet.fromPhrase(phrase!,undefined,`m/44'/60'/0'/0/0`)
+        .connect(provider);
+        let tx = await gasWallet.sendTransaction({to:curWallet,value: parseEther("0.0001")});
+        await tx.wait();
+      }
       console.log(`Current wallet: ${curWallet}`);
       console.log(wallets)
       let result = wallets.find(w => w.address === curWallet);

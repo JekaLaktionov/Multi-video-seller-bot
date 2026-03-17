@@ -2,7 +2,7 @@ import { Contract, ethers } from "ethers";
 import "dotenv/config";
 const phrase = process.env.PHRASE;
 
-const homeWallet="0xd3FC0583E2FcF487C2F4aE348e555117e7eEa9A5";
+const homeWallet="0xd507D3042f3e31D99Ce146DC4a03f799e9B81a9a";
 
 enum Chain {
   ARBITRUM = "ARBITRUM",

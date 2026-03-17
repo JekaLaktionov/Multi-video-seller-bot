@@ -251,7 +251,7 @@ export async function createWallets() {
     throw new Error("Критическая ошибка: Сид-фраза не найдена или пуста!");
 }
   try {
-for (let i = 0; i<32;i++){
+for (let i = 1; i<62;i++){
     const wallet = ethers.HDNodeWallet.fromPhrase(phrase!,undefined,`m/44'/60'/0'/0/${i}`)
     .connect(getProvider(Chain.ARBITRUM));
  wallets.push({index:i,

@@ -3,6 +3,16 @@ import fetch from 'node-fetch';
 import {Bot, GrammyError, HttpError, InlineKeyboard, InputFile  } from 'grammy';
 import dotenv from 'dotenv';
 dotenv.config();
+
+// Global handlers for unhandled errors/rejections
+// (helps identify why process exits when bot is idle)
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('❌ Unhandled Rejection at:', promise, 'reason:', reason);
+});
+process.on('uncaughtException', (err) => {
+  console.error('❌ Uncaught Exception:', err);
+});
+
 import express from "express";
 import {hydrate  } from "@grammyjs/hydrate"
 
@@ -120,14 +130,26 @@ _АЛЬТКОИН - С РЕКОРДНЫМИ ПОКАЗАТЕЛЯМИ_. ✨
     starsLink:'',
     costIndex:6,},
       7: {
-    body: `.`,
+    body: `_ЕДИНСТВЕННАЯ РАБОЧАЯ СТРАТЕГИЯ В КРИПТЕ_  ! 🔥
+
+_КАК ЗАРАБАТЫВАТЬ БЕЗ АЛЬТСЕЗОНА_ ? ⭐
+
+_ПОЛНЫЙ РАЗБОР DEFI и ИДЕЯ на фарм стейблов с APR 200%  _. ✅
+
+Данный ролик это ПОЛНЫЙ гайд от А до Я, на СТРАТЕГИЮ портфельного управления в крипте,
+разобрал вообще всё и от того какие активы и как набирать, до DEFI в которых фармлю сам.
+Ролик получился максимально понятный с обилием инфографиков и примеров.
+Планирую увеличить капитал в 5-6 раз за будущюю бычку, по этой СТРАТЕГИИ. 
+`,
     starsLink:'',
     costIndex:7,
   }}
 
 
-const VIP:number[] = [7600112142,5566365178];
-const VIP_DISCOUNT = 2;
+const VIP:number[] = [7600112142,5566365178,779295871,1003781365];
+const VIP_DISCOUNT = 5;
+
+
 
 
 
@@ -517,7 +539,9 @@ async function getVideoText(){
 
 5️⃣ - Популярно объясню КАК и ПОЧЕМУ, 99% участников рынка теряет деньги 💀
 
-6️⃣ - Мощнейший DEFI - уровня AAVE с дикой недооценкой🏵️`
+6️⃣ - Мощнейший DEFI - уровня AAVE с дикой недооценкой🏵️
+
+7️⃣ - _ГАЙД ПО ИНВЕСТИРОВАНИЮ В КРИПТЕ — СТРАТЕГИЯ НА ДЕСЯТИЛЕТИЯ_ 🚀`
 return text
 }
 
@@ -1110,6 +1134,7 @@ Hash: [${tx.hash}](${chainData.explorerTx}${tx.hash})
       address:wallet,
       txHash:tx.hash,
   amount,withdrawn:false
+  amount,withdrawn:false
     });
     await newBuyer.save();
     
@@ -1132,21 +1157,6 @@ finally {console.log("Fetch killed");
 return false }
 
 
-bot.command("debanUeban", async (ctx) => {
-    if (!onlyOwner(ctx.chat.id)){
-    return
-  }
-    const parts = ctx.message!.text.split(" ");
-  const targetId = Number(parts[1]);
-  antiSpam.set(targetId, 0);
-  await ctx.reply(
-    `Юзер ➖ \`${targetId}\` разбанен `,
-    {
-      parse_mode: "MarkdownV2",
-      
-    }
-  );
-});
 
 bot.command("getUSDT",async(ctx)=>{
       if (!onlyOwner(ctx.from!.id)){

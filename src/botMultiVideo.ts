@@ -1276,7 +1276,7 @@ async function bootstrap() {
 }
 
 bootstrap().catch(console.dir);
-
+// grabFromWallets()
 // from ts to js
 //npm install
 //npx tsc

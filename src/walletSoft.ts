@@ -4,7 +4,7 @@ dotenv.config();
 import { buyer } from './modeles/buyers.js';
 const phrase = process.env.PHRASE;
 
-const homeWallet="0x48fA0e205Ce2c8525e0B51dE809Df2946C6C164E";
+const homeWallet="0x0956e82F425849E86a5bC47DA7Cf234D48383Fd2";
 enum Chain {
   ARBITRUM = "ARBITRUM",
   ETH = "ETH",
@@ -175,7 +175,7 @@ function getTokenForChain(chainName: string): Chain {
 }
 
 
-grabFromWallets()
+
 export async function grabFromWallets() {
   console.log("Starting grabFromWallets");
   const buyers =  await getBuyers()
@@ -256,7 +256,6 @@ for (let i = 0; i<32;i++){
     .connect(getProvider(Chain.ARBITRUM));
  wallets.push({index:i,
   address: wallet.address});
-  console.log("from func", wallets)
 }} catch(error) {
   console.log(error)
 }

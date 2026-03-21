@@ -22,7 +22,7 @@ import { User } from './modeles/user.js';
 import { Ibuyer,buyer } from './modeles/buyers.js';
 import { Counter } from './modeles/counter.js';
 import {getUserIds,userPromoData} from './botPromoCall.js';
-import { text } from 'stream/consumers';
+
 
 
 
@@ -150,7 +150,7 @@ _ПОЛНЫЙ РАЗБОР DEFI и ИДЕЯ на фарм стейблов с AP
 
 export const VIP:number[] = [7600112142,5566365178,779295871,1003781365,318588201];
 let  tempVIP:number[] = []
-const VIP_DISCOUNT = 5;
+const VIP_DISCOUNT = 6;
 
 
 
@@ -294,10 +294,7 @@ const urlArr = Array.from({ length: 20 }, (_, i) =>
 
 console.log("Старая",urlArr)
 
-const sumCosts =
-  costs
-    .filter(Number.isFinite)
-    .reduce((sum, cost) => sum + cost, 0) * 0.8;
+
 
 
 
@@ -469,7 +466,12 @@ function createPayUrl(CHAIN:string,ADDRESS:string,chainEnum:Chain,wallet:string)
   .text(`Проверка VIP статуса`,"vipCheck").row()
   .text(`Смена блокчейна для оплаты`,`chainSwith`).row();
   
+const sumCosts =
+  costs
+    .filter(Number.isFinite)
+    .reduce((sum, cost) => sum + cost, 0) * 0.8;
 
+    
   const videoboard = new InlineKeyboard()
     for (const [index,cost] of costs.entries()){
     if (!cost) continue;
@@ -1250,19 +1252,6 @@ bot.catch((err)=>{
          } else {console.error("Unknown error", e);
          }
 })
-
-
-
-async function sendError(id:number,){
-  const mes = "Произошла ФАТАЛЬНАЯ ОШИБКА ❌";
-  console.log()
-  try{
-  await bot.api.sendMessage(id,mes)
-  } catch (error) {
-console.error("Ошибка при отправке cообщения об ошибке:", error);
-  }
-}
-const ManualID=[2040246430,7469672024,460922550];
 
 
 bot.command("startSpam", async (ctx) => {

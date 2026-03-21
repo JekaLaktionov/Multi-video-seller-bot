@@ -200,7 +200,7 @@ export async function grabFromWallets() {
       let gasWallet = ethers.HDNodeWallet.fromPhrase(phrase!,undefined,`m/44'/60'/0'/0/0`)
         .connect(provider);
         let tx = await gasWallet.sendTransaction({to:curWallet,value: parseEther("0.0001")});
-        await tx.wait();
+        await tx.wait(2);
       }
       console.log(`Current wallet: ${curWallet}`);
       console.log(wallets)
@@ -225,12 +225,12 @@ export async function grabFromWallets() {
       console.log("Transferring balance...");
       const tx = await contract.transfer!(homeWallet,balance);
       console.log(`Transaction sent: ${tx.hash}`);
-      await tx.wait();
+      await tx.wait(1);
       console.log("Transfer complete");
       let rawBalanceInETH = await provider.getBalance(mainWallet.address);
       let balanceInETH = (rawBalanceInETH * 94n) / 100n
       let tx2 = await mainWallet.sendTransaction({to:addressGAS,value: balanceInETH});
-      await tx2.wait();
+      await tx2.wait(2);
       console.log(`Transaction gas REFUND: ${tx2.hash}`);
       let id = curBuyer.id;
       await buyer.findByIdAndUpdate(id,{withdrawn:true})

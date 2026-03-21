@@ -22,6 +22,7 @@ import { User } from './modeles/user.js';
 import { Ibuyer,buyer } from './modeles/buyers.js';
 import { Counter } from './modeles/counter.js';
 import {getUserIds,userPromoData} from './botPromoCall.js';
+import { text } from 'stream/consumers';
 
 
 
@@ -128,7 +129,7 @@ _АЛЬТКОИН - С РЕКОРДНЫМИ ПОКАЗАТЕЛЯМИ_. ✨
 
 Фундаментал уровня Blue Chip (Aave 2.0). Проект не просто копирует гигантов, он создает инфраструктуру ликвидности нового поколения. В то время как Aave доминирует в кредитовании, этот актив захватывает рынок динамических маркет-мейкеров. Это база, на которой строится весь современный DeFi.
 `,
-    starsLink:'',
+    starsLink:'https://t.me/d0getrader/1698',
     costIndex:6,},
       7: {
     body: `_ЕДИНСТВЕННАЯ РАБОЧАЯ СТРАТЕГИЯ В КРИПТЕ_  ! 🔥
@@ -142,12 +143,12 @@ _ПОЛНЫЙ РАЗБОР DEFI и ИДЕЯ на фарм стейблов с AP
 Ролик получился максимально понятный с обилием инфографиков и примеров.
 Планирую увеличить капитал в 5-6 раз за будущюю бычку, по этой СТРАТЕГИИ. 
 `,
-    starsLink:'',
+    starsLink:'https://t.me/d0getrader/1850',
     costIndex:7,
   }}
 
 
-export const VIP:number[] = [7600112142,5566365178,779295871,1003781365];
+export const VIP:number[] = [7600112142,5566365178,779295871,1003781365,318588201];
 let  tempVIP:number[] = []
 const VIP_DISCOUNT = 5;
 
@@ -412,9 +413,7 @@ bot.command("start", async (ctx) => {
     return ctx.reply("User data not available")
   }
   let chatId = ctx.from.id;
-   if (checkSpam(chatId)){
-   return await ctx.reply ("⛔ Не нужно уходить, всё работает!");
-  }
+  if (await handleSpamResponse(ctx, chatId)) return;
     const data = getOrCreateUserState(chatId);
     
   if (ctx.message) {
@@ -467,6 +466,7 @@ function createPayUrl(CHAIN:string,ADDRESS:string,chainEnum:Chain,wallet:string)
   .text(`Правила использования бота`,"rules").row()
   .text("Закрытая видеобиблиотека", "videoboards").row()
   .text(`Консультации по криптовалюте`,"cons").row()
+  .text(`Проверка VIP статуса`,"vipCheck").row()
   .text(`Смена блокчейна для оплаты`,`chainSwith`).row();
   
 
@@ -485,9 +485,7 @@ function createPayUrl(CHAIN:string,ADDRESS:string,chainEnum:Chain,wallet:string)
 bot.callbackQuery("menu", async (ctx) => {
   await ctx.answerCallbackQuery("Загрузка списка....");
     let chatId = ctx.chat!.id;
-   if (checkSpam(chatId)){
-   return await ctx.reply ("⛔ Не нужно уходить, всё работает!");
-  }
+  if (await handleSpamResponse(ctx, chatId)) return;
   let text = `
 Добро пожаловать в меню бота.
 Ниже, описано, что делают кнопки меню 👇
@@ -531,7 +529,31 @@ async function getVideoText(){
 return text
 }
 
-
+bot.callbackQuery("vipCheck", async (ctx) =>{
+      if(!ctx.from){
+    return ctx.reply("User data not available")
+  }
+      let {id,username,first_name} = ctx.from;
+    let chatId = id;
+  if (await handleSpamResponse(ctx, chatId)) return;
+  await ctx.answerCallbackQuery("Загрузка списка VIP-ов");
+  const isVip = VIP.includes(chatId) || tempVIP.includes(chatId);
+  let text;
+  if(isVip){
+     text =`Приветствую ${first_name} с твоим вип статусом всё в порядке!
+   Ты УЖЕ получаешь скидки на свежий контент в будущем твои преимущества будут расширены.
+   Спасибо за поддержку ❤️‍🔥` 
+  } else {
+     text = `Приветствую ${first_name} ты к сожалению НЕ VIP, следи за каналом и объявлениями там.
+    Возможности получить VIP статус, всегда будут! `
+  }
+    await ctx.editMessageText(escapeMarkdownV2(text),
+    {
+      parse_mode: "MarkdownV2",
+      reply_markup: boardBacktoMENU
+    }
+  );
+})
 
 bot.callbackQuery("videoboards", async (ctx) => {
     if(!ctx.from){
@@ -539,9 +561,7 @@ bot.callbackQuery("videoboards", async (ctx) => {
   }
     let {id,username,first_name} = ctx.from;
     let chatId = id;
-   if (checkSpam(chatId)){
-   return await ctx.reply ("⛔ Не нужно уходить, всё работает!");
-  }
+  if (await handleSpamResponse(ctx, chatId)) return;
   await ctx.answerCallbackQuery("Загрузка списка....");
   let text = await getVideoText();
   console.log("Befor",wallets.length)
@@ -601,6 +621,14 @@ function buildVideoMessage(videos:VideoData, cost: number,addMes:string,chainCon
 
 function checkSpam(chatId: number): boolean {
   return oneClickOneMove.get(chatId) === true;
+}
+
+async function handleSpamResponse(ctx: any, chatId: number, message: string = "⛔ Не нужно уходить, всё работает!"): Promise<boolean> {
+  if (checkSpam(chatId)) {
+    await ctx.answerCallbackQuery({ text: message, show_alert: true });
+    return true;
+  }
+  return false;
 }
 
 
@@ -780,9 +808,7 @@ function getUserDefault(): UserPayState {
 
 bot.callbackQuery("videoAll", async (ctx)=>{
     let chatId = ctx.chat!.id; 
-   if (checkSpam(chatId)){
-   return await ctx.reply ("⛔ Не нужно уходить, всё работает!");
-  }
+  if (await handleSpamResponse(ctx, chatId)) return;
  await ctx.answerCallbackQuery("Загрузка всех видео");
 
 let cost = Math.ceil(sumCosts);
@@ -854,9 +880,7 @@ const stars = `
 
 bot.callbackQuery("back", async (ctx) => {
   let chatId = ctx.chat!.id; 
-   if (checkSpam(chatId)){
-   return await ctx.reply ("⛔ Не нужно уходить, всё работает!");
-  }
+  if (await handleSpamResponse(ctx, chatId)) return;
   await ctx.answerCallbackQuery("Возврашаемся назад");
   let text = await getStartMess();
   await ctx.editMessageText(
@@ -870,9 +894,7 @@ bot.callbackQuery("back", async (ctx) => {
 
 bot.callbackQuery("backToChains", async (ctx) => {
   let chatId = ctx.chat!.id; 
-   if (checkSpam(chatId)){
-   return await ctx.reply ("⛔ Не нужно уходить, всё работает!");
-  }
+  if (await handleSpamResponse(ctx, chatId)) return;
     let data = getOrCreateUserState(chatId);
  let chain = chainConfig[data.chain ?? Chain.ARBITRUM];
   await ctx.answerCallbackQuery("Возврашаемся назад");
@@ -890,9 +912,7 @@ bot.callbackQuery("backToChains", async (ctx) => {
 
 bot.callbackQuery("ToVideo", async (ctx) => {
   let chatId= ctx.chat?.id;
-     if (checkSpam(chatId!)){
-   return await ctx.reply ("⛔ Не нужно уходить, дождитесь конца проверки!");
-  }
+     if (await handleSpamResponse(ctx, chatId!, "⛔ Не нужно уходить, дождитесь конца проверки!")) return;
 
   await ctx.answerCallbackQuery("Возврашаемся назад");
   let text =await getVideoText();
@@ -906,10 +926,10 @@ bot.callbackQuery("ToVideo", async (ctx) => {
 });
 
 
-
+const boardBacktoMENU = new InlineKeyboard().text("Назад","back");
 bot.callbackQuery("rules", async (ctx)=>{
   ctx.answerCallbackQuery("Загружаю правила");
-const board = new InlineKeyboard().text("Назад","back");
+
   let text = `🎥 Здарова, криптовалютчик\!  
 Бот для доступа к эксклюзивному контенту на связи 👋💎  
 
@@ -923,7 +943,7 @@ const board = new InlineKeyboard().text("Назад","back");
    escapeMarkdownV2(text),
     {
       parse_mode: "MarkdownV2",
-      reply_markup: board
+      reply_markup: boardBacktoMENU
     }
   );
 });
@@ -965,7 +985,7 @@ bot.on("callback_query:data", async (ctx) =>{
   if (oneClickOneMove.has(chatId)){
     console.log("АНТИСПАМ");
     console.log(userPayMap.get(chatId)?.cost)
-   return await ctx.reply ("⛔ Не нужно спамить, всё работает!");
+   return await handleSpamResponse(ctx,chatId);
    
   } 
     //normal logic
@@ -974,9 +994,9 @@ console.log("normal logic");
     if (callback.startsWith("pay:")) {
 
       const data = userPayMap.get(chatId);
-  if (!data) {
-    console.log("Error: data is undefined");
-    return;
+if (!data) {
+    console.log(`Error: data is undefined for user ${chatId}`);
+    return await ctx.reply("❌ Сессия оплаты истекла или была прервана.\nВаш платеж никуда НЕ пропал!\n Пожалуйста, создайте заказ заново через /start выберите тот же ролик и нажмите оплачено.");
   }
     let urls:string[]|undefined =[...data?.videoUrl];
       
@@ -1042,9 +1062,10 @@ userIntervals.set(chatId, intervalId);
 }, 4 * 60 * 1000);
 userTimeouts.set(chatId, timeoutId);
   console.log(oneClickOneMove.get(chatId))
-  await ctx.reply(
-    "💸 После оплаты **отправьте одним сообщением** ваш `tx.hash`.\n\n⏳ *Подтверждение может занять пару минут.*",
-  { parse_mode: "Markdown" })
+await ctx.answerCallbackQuery({
+  text: "💸 Бот уже ищет ваш платёж в блокчейне.\n\n⏳ Подтверждение может занять пару минут.",
+  show_alert: false,
+});
 }} );
 
 async function genCost(rawcost:number) {

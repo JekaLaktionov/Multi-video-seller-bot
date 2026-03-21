@@ -232,20 +232,6 @@ export const chainConfig: Record<Chain, ChainConfig> = {
     baseUrl:"https://explorer.optimism.io/",
     name:"OP"
   },
-    [Chain.BERA]: {
-    chainId: 80094,
-    tokenAddress: '0x779Ded0c9e1022225f8E0630b35a9b54bE713736',
-    explorerTx: 'https://beratrail.io/tx/',
-    name: "BERACHAIN"
-  },
-
-  [Chain.CELO]: {
-    chainId: 42220,
-    tokenAddress: '0x48065fbBE25f71C9282ddf5e1cD6D6A887483D5e', 
-    explorerTx: 'https://celoscan.io/tx/',
-    name: "CELO"
-  },
-
   [Chain.MANTLE]: {
     chainId: 5000,
     tokenAddress: '0x779Ded0c9e1022225f8E0630b35a9b54bE713736',

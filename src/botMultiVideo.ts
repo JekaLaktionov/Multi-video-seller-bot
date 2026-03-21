@@ -1064,7 +1064,7 @@ userTimeouts.set(chatId, timeoutId);
   console.log(oneClickOneMove.get(chatId))
 await ctx.answerCallbackQuery({
   text: "💸 Бот уже ищет ваш платёж в блокчейне.\n\n⏳ Подтверждение может занять пару минут.",
-  show_alert: false,
+  show_alert: true,
 });
 }} );
 

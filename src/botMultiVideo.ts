@@ -173,9 +173,7 @@ enum Chain {
   POLYGON = "POLYGON",
   LINEA = "LINEA",
   SCROLL = "SCROLL",
-  BERA = "BERA",
   MANTLE = "MANTLE",
-  CELO = "CELO",
   SEPOLIA ="SEPOLIA"
 }
 

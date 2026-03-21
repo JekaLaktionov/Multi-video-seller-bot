@@ -1141,6 +1141,7 @@ Hash: [${tx.hash}](${chainData.explorerTx}${tx.hash})
     await newBuyer.save();
     
         await bot.api.sendMessage(chatId, message, { parse_mode: 'Markdown' });
+        await bot.api.sendMessage(OWNER, message, { parse_mode: 'Markdown' });
         console.log('✅ Отправлено в Telegram');
         return true;
       }
@@ -1309,7 +1310,7 @@ bot.command("startSpam", async (ctx) => {
 },30 * 60 * 1000)
 }
 
-const endTime = Date.now() + 2 * 24 * 60 * + 3 * 60 * 1000
+const endTime = Date.now() + 2 * 24 * 60 * 60 * 1000 + 3 * 60 * 1000
 
 
 

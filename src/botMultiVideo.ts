@@ -1292,7 +1292,7 @@ bot.command("startSpam", async (ctx) => {
 
 Не откладывай — предложение временное ⚡
 `
-    await bot.api.sendMessage(user.tgId,mes)
+    // await bot.api.sendMessage(user.tgId,mes)
     }
     tempVIP.push(...userData.map(a => a.tgId));
     const intervalVIP = setInterval(() => {

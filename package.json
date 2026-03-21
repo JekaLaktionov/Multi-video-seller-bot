@@ -5,8 +5,9 @@
   "type": "module",
   "main": "botMultiVideo.ts",
   "scripts": {
-    "start": "nodemon --exec tsx src/botMultiVideo.ts",
     "build": "tsc"
+    "start": "node dist/botMultiVideo.js",
+    
   },
   "keywords": [],
   "author": "",

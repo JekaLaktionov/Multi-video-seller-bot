@@ -374,6 +374,9 @@ bot.api.setMyCommands([
   {
     command: "start", description: "Запуск бота" 
   },
+    {
+    command: "/rules", description: "Правила использования и ОТКАЗ ОТ ОТВЕТСТВЕННОСТИ" 
+  }
 ])
 
 async function getStartMess() {
@@ -381,7 +384,9 @@ async function getStartMess() {
   let StartText = `🎥 Здарова, криптовалютчик\!  
 Бот для доступа к эксклюзивному контенту на связи 👋💎  
 
+
 Перед использованием бота прочитай *простые правила* ⬇️
+(Все ПРАВИЛА ДОСТУПНЫ по команде /rules)
 
 1️⃣ - Нажимай **«Отправлено»** только после отправки USDT 💸  
 2️⃣ - Оплачивай **точную сумму**, которую просит бот (со всеми копейками) ✔️  
@@ -464,7 +469,7 @@ function createPayUrl(CHAIN:string,ADDRESS:string,chainEnum:Chain,wallet:string)
   .text("Закрытая видеобиблиотека", "videoboards").row()
   .text(`Консультации по криптовалюте`,"cons").row()
   .text(`Проверка VIP статуса`,"vipCheck").row()
-  .text(`Смена блокчейна для оплаты`,`chainSwith`).row();
+  .text(`Смена блокчейна`,`chainSwith`).row();
   
 const sumCosts =
   costs

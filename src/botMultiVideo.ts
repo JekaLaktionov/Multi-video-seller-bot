@@ -616,12 +616,12 @@ function buildVideoMessage(videos:VideoData, cost: number,addMes:string,chainCon
     "\n\n";
 
   const requisites =
-    `Для покупки отправьте USDT 💵 в сети *${chainConf.name}*\n` +
-    `К ОПЛАТЕ \\- \`${cost}\` USDT\n` +
+    `Для получения доступа отправьте USDT 💵 в сети *${chainConf.name}*\n` +
+    `ОЖИДАЕМ \\- \`${cost}\` USDT\n` +
     `На адрес \\- \`${wallet}\`\n\n`;
 
   const stars = 
-    `🌟[За STARS купить тут](${videos.starsLink})`+"\n";
+    `🌟[За STARS тут](${videos.starsLink})`+"\n";
 
   return escapeMarkdownV2(addMes)+ text + requisites + stars;
 }
@@ -998,7 +998,6 @@ const board = new InlineKeyboard().text("Назад","backToChains");
 
 
 bot.on("callback_query:data", async (ctx) =>{
-  ctx.answerCallbackQuery("Проверяем платёж");
   let chatId = ctx.chat!.id;
   let n:string;
   if (oneClickOneMove.has(chatId)){
@@ -1015,7 +1014,7 @@ console.log("normal logic");
       const data = userPayMap.get(chatId);
 if (!data) {
     console.log(`Error: data is undefined for user ${chatId}`);
-    return await ctx.reply("❌ Сессия оплаты истекла или была прервана.\nВаш платеж никуда НЕ пропал!\n Пожалуйста, создайте заказ заново через /start выберите тот же ролик и нажмите отправлено.");
+    return await ctx.reply("❌ Сессия истекла или была прервана.\nВаш платеж никуда НЕ пропал!\n Пожалуйста, создайте заказ заново через /start выберите тот же ролик и нажмите отправлено.");
   }
     let urls:string[]|undefined =[...data?.videoUrl];
       

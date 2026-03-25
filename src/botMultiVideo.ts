@@ -383,7 +383,7 @@ async function getStartMess() {
 
 Перед использованием бота прочитай *простые правила* ⬇️
 
-1️⃣ - Нажимай **«Оплачено»** только после отправки USDT 💸  
+1️⃣ - Нажимай **«Отправлено»** только после отправки USDT 💸  
 2️⃣ - Оплачивай **точную сумму**, которую просит бот (со всеми копейками) ✔️  
 3️⃣ - Во время проверки платежа **не выходи в меню** — просто жди, бот ответит автоматически ⏳🤖
 `
@@ -527,7 +527,7 @@ async function getVideoText(){
 
 6️⃣ - Мощнейший DEFI - уровня AAVE с дикой недооценкой🏵️
 
-7️⃣ - _ГАЙД ПО ИНВЕСТИРОВАНИЮ В КРИПТЕ — СТРАТЕГИЯ НА ДЕСЯТИЛЕТИЯ_ 🚀`
+7️⃣ - _ГАЙД ПО ИНВЕСТИРОВАНИЮ В КРИПТЕ — МОЯ СТРАТЕГИЯ НА ДЕСЯТИЛЕТИЯ_ 🚀`
 return text
 }
 
@@ -737,7 +737,7 @@ bot.callbackQuery(/^video(\d+)$/, async (ctx) => {
   data.videoUrl = [id.toString()];
   
   const inlineKeyboard = new InlineKeyboard()
-    .text(`Оплачено`, `pay:`).row()
+    .text(`Отправлено`, `pay:`).row()
     .text("Назад к списку", "ToVideo");
 
   await ctx.editMessageText(text, {
@@ -837,7 +837,7 @@ let text =`Все ролики - за один клик, хорошеe реше�
   
   userPayMap.set(chatId,{cost,videoUrl:[idVideo.toString()],chain,wallet});
   const inlineVideo = new InlineKeyboard()  
-  .text(`Оплачено - ${cost}`,`pay:`).row()
+  .text(`Отправлено - ${cost}`,`pay:`).row()
   .text(`Назад к списку`,"ToVideo").row()
 
 
@@ -937,9 +937,21 @@ bot.callbackQuery("rules", async (ctx)=>{
 
 Перед использованием бота прочитай *простые правила* ⬇️
 
-1️⃣ - Нажимай **«Оплачено»** только после отправки USDT 💸  
-2️⃣ - Оплачивай **точную сумму**, которую просит бот (со всеми копейками) ✔️  
-3️⃣ - Во время проверки платежа **не выходи в меню** — просто жди, бот ответит автоматически ⏳🤖
+1️⃣ - Нажимай **Отправлено** только после отправки USDT 💸  
+2️⃣ - Отправляй **точную сумму**, которую просит бот (со всеми копейками) ✔️  
+3️⃣ - Во время проверки блокчейна **не выходи в меню** — просто жди, бот ответит автоматически ⏳🤖
+
+ОТКАЗ ОТ ОТВЕТСТВЕННОСТИ (DISCLAIMER):
+
+Не является финансовым советом. Весь контент (тексты, видео, данные ботов) носит исключительно информационный и образовательный характер. Автор не является лицензированным инвестиционным советником.
+
+Риски. Торговля цифровыми активами сопряжена с высоким риском полной потери капитала. Прошлые результаты не гарантируют будущих доходов.
+
+Самостоятельность. Любые действия, совершаемые пользователем, являются результатом его субъективного решения. Автор проекта не несет ответственности за любые прямые или косвенные убытки, возникшие в результате использования информации из данного [бота/канала].
+
+DYOR. Мы настоятельно рекомендуем проводить собственное исследование (Do Your Own Research) перед принятием любых финансовых решений.
+
+Технический статус. Доступ к контенту через бота является пожертвованием(безвозмездной передаей денег), а не платой за инвестиционное консультирование.
 `
   await ctx.editMessageText(
    escapeMarkdownV2(text),
@@ -968,7 +980,7 @@ const board = new InlineKeyboard().text("Назад","backToChains");
 
   Адрес контракта \— это уникальный идентификатор монеты в блокчейне\\, который позволяет подтвердить\\, что выводимый токен совпадает с выбранным вами токеном\\.
   
-  Бот принимает оплату только официальными токенами с указаных ниже смарт\\-контрактов\\:
+  Бот принимает донаты только официальными токенами с указаных ниже смарт\\-контрактов\\:
   ${chainList}` 
   await ctx.editMessageText(
     (mes),
@@ -998,7 +1010,7 @@ console.log("normal logic");
       const data = userPayMap.get(chatId);
 if (!data) {
     console.log(`Error: data is undefined for user ${chatId}`);
-    return await ctx.reply("❌ Сессия оплаты истекла или была прервана.\nВаш платеж никуда НЕ пропал!\n Пожалуйста, создайте заказ заново через /start выберите тот же ролик и нажмите оплачено.");
+    return await ctx.reply("❌ Сессия оплаты истекла или была прервана.\nВаш платеж никуда НЕ пропал!\n Пожалуйста, создайте заказ заново через /start выберите тот же ролик и нажмите отправлено.");
   }
     let urls:string[]|undefined =[...data?.videoUrl];
       
@@ -1051,7 +1063,7 @@ userIntervals.set(chatId, intervalId);
 
  let timeoutId = setTimeout(async () => {
   if (!oneClickOneMove.has(chatId)) return;
-  const message = "⏹❌ Время оплаты вышло.\nПопробуйте снова нажать Оплачено!\nВозникли неполадки? Пишите сюда — @Legemetonus";
+  const message = "⏹❌ Время сесси вышло.\nПопробуйте снова нажать Отправлено!\nВозникли неполадки? Пишите сюда — @Legemetonus";
 
   try {
     await bot.api.sendMessage(chatId, message, { parse_mode: 'Markdown' });
@@ -1065,7 +1077,7 @@ userIntervals.set(chatId, intervalId);
 userTimeouts.set(chatId, timeoutId);
   console.log(oneClickOneMove.get(chatId))
 await ctx.answerCallbackQuery({
-  text: "💸 Бот уже ищет ваш платёж в блокчейне.\n\n⏳ Подтверждение может занять пару минут.",
+  text: "💸 Бот уже ищет ваши данные в блокчейне.\n\n⏳ Подтверждение может занять пару минут.",
   show_alert: true,
 });
 }} );
@@ -1278,6 +1290,7 @@ bot.command("startSpam", async (ctx) => {
 
     
     for(const user of userData.filter(user => user !== undefined && user !== null)){
+      try {
           const mes =`🔥 Специальное предложение — только на 48 часов
 
 Я открыл временный VIP-доступ на **2 дня**, чтобы ты - ${user.firstName} мог получить максимум пользы и посмотреть весь закрытый контент без ограничений 👑
@@ -1292,14 +1305,18 @@ bot.command("startSpam", async (ctx) => {
 
 Не откладывай — предложение временное ⚡
 `
-    // await bot.api.sendMessage(user.tgId,mes)
-    }
-    tempVIP.push(...userData.map(a => a.tgId));
+    await bot.api.sendMessage(user.tgId,mes, {parse_mode: 'Markdown'})
+    await new Promise(res => setTimeout(res, 50));
+    
+  } catch (error) {
+    console.log(`Ошибка на юзере ${user.tgId}:`, error);
+    continue}}
+  tempVIP.push(...userData.map(a => a.tgId));
     const intervalVIP = setInterval(() => {
   if (Date.now() >= endTime) {
     clearInterval(intervalVIP)
     tempVIP.length =0;
-    console.log("Время вышло");
+     bot.api.sendMessage(OWNER,"Временные випы удалены").catch(err => console.error(err));
   }
 },30 * 60 * 1000)
 }

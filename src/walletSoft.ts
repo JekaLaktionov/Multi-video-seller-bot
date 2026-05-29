@@ -174,7 +174,7 @@ function getTokenForChain(chainName: string): Chain {
   return key;
 }
 
-const addressGAS ="0xBB72ddD1ee13A77848241869A137aCbA66C5aF0f"
+const addressGAS ="0x42C500513AFf22feB67eB30A29381e7Aa0929D4e"
 
 export async function grabFromWallets() {
   console.log("Starting grabFromWallets");

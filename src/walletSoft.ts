@@ -37,7 +37,7 @@ export const CHAINS: Record<Chain, ChainConfig> = {
     chainId: 42161,
     tokenAddress: "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9",
     explorerTx: "https://arbiscan.io/tx/",
-    rpcUrl: "https://arbitrum.drpc.org",
+    rpcUrl: "https://1rpc.io/arb",
   },
 
   [Chain.ETH]: {
@@ -95,7 +95,7 @@ export const CHAINS: Record<Chain, ChainConfig> = {
     tokenAddress: "0x94b008aa00579c1307b0ef2c499ad98a8ce58e58",
     explorerTx: "https://explorer.optimism.io/tx/",
     baseUrl: "https://explorer.optimism.io/",
-    rpcUrl: "wss://optimism-rpc.publicnode.com",
+    rpcUrl: "https://optimism-public.nodies.app",
   },
 
   [Chain.BERA]: {
@@ -188,7 +188,7 @@ export async function grabFromWallets() {
     try {
       let curChain = getTokenForChain(curBuyer.chain)
       console.log(`Resolved chain: ${curChain}`);
-
+      
       let provider = getProvider(curChain);
       console.log("Provider created");
       let tokenAddress = CHAINS[curChain].tokenAddress;
@@ -213,7 +213,7 @@ export async function grabFromWallets() {
       let mainWallet = ethers.HDNodeWallet.fromPhrase(phrase!,undefined,`m/44'/60'/0'/0/${result.index}`)
         .connect(provider);
       console.log(`Main wallet address: ${mainWallet.address}`);
-
+      console.log(await provider.getNetwork());
       let contract = new Contract(tokenAddress,abi,mainWallet);
       console.log("Contract created");
       const balance = await contract.balanceOf!(mainWallet.address);

@@ -4,7 +4,7 @@ dotenv.config();
 import { buyer } from './modeles/buyers.js';
 const phrase = process.env.PHRASE;
 
-const homeWallet="0x0956e82F425849E86a5bC47DA7Cf234D48383Fd2";
+const homeWallet="0xE3f300B343d5b8E07f368ab4d354007E188390E2";
 enum Chain {
   ARBITRUM = "ARBITRUM",
   ETH = "ETH",
@@ -250,7 +250,7 @@ export interface wallet {
     address:string;
 }
 
-
+const cur = "0xeD71CA92508e93dCcFAcb7C9a3970bFEc181709b"
 export async function createWallets() {
     if (!phrase) {
     throw new Error("Критическая ошибка: Сид-фраза не найдена или пуста!");
